@@ -29,12 +29,7 @@ public class Robot extends TimedRobot{
 	WPI_TalonSRX m_rearLeft;
 	WPI_TalonSRX m_frontRight;
 	WPI_TalonSRX m_rearRight; 
-	
-	
-	
-	
-	//a
-	
+		
 	Joystick left, right;
 	
 
@@ -44,8 +39,8 @@ public class Robot extends TimedRobot{
 		Encoder drive_right = new Encoder(2, 3, false, Encoder.EncodingType.k4X);	
 	//Elevator
 		//stage 2
-			WPI_TalonSRX stage2Right = new WPI_TalonSRX(2);
-			WPI_TalonSRX stage2Left= new WPI_TalonSRX(1);
+			WPI_TalonSRX stage2Right = new WPI_TalonSRX(1);
+			WPI_TalonSRX stage2Left= new WPI_TalonSRX(2);
 			//switches
 				DigitalInput stage2TopStop = new DigitalInput(4);
 				DigitalInput stage2BottomStop = new DigitalInput(5);			
@@ -181,6 +176,12 @@ public class Robot extends TimedRobot{
 				stage2Right.set(stage2Speed * -1);
 				stage2Left.set(stage2Speed * -1);
 			}
+			if (lPOV == -1)
+			{
+				stage2Right.set(0.0);
+				stage2Left.set(0.0);
+			}
+		
 	//climb logic
 			if(lTrigger)
 			{
@@ -199,7 +200,7 @@ public class Robot extends TimedRobot{
 			{
 				cariage.set(cariageSpeed);
 			}
-		
+			
 		
 		}
     }
