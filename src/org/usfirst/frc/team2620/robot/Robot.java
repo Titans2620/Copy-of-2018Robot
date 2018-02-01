@@ -26,59 +26,35 @@ import edu.wpi.first.wpilibj.CameraServer;
 public class Robot extends TimedRobot{
 	
 	
-	WPI_TalonSRX m_frontLeft;
-	WPI_TalonSRX m_rearLeft;
-	WPI_TalonSRX m_frontRight;
-	WPI_TalonSRX m_rearRight; 
-		
-	Joystick left, right;
+	WPI_TalonSRX m_frontLeft = new WPI_TalonSRX(1);
+	WPI_TalonSRX m_rearLeft = new WPI_TalonSRX(2);	
+	WPI_TalonSRX m_frontRight = new WPI_TalonSRX(3);
+	WPI_TalonSRX m_rearRight = new WPI_TalonSRX(4);
+	WPI_TalonSRX stage2Right = new WPI_TalonSRX(5);
+	WPI_TalonSRX stage2Left= new WPI_TalonSRX(6);
+	WPI_TalonSRX cariage = new WPI_TalonSRX(7);
+	WPI_TalonSRX pickupRight = new WPI_TalonSRX(8);
+	WPI_TalonSRX pickupLeft = new WPI_TalonSRX(9);
 	
+	Servo climbLock = new Servo(0);
 	
-	//drive
-		//encoders
-		Encoder drive_left = new Encoder(0, 1, false, Encoder.EncodingType.k4X);
-		Encoder drive_right = new Encoder(2, 3, false, Encoder.EncodingType.k4X);	
-	//Elevator
-		//stage 2
-			WPI_TalonSRX stage2Right = new WPI_TalonSRX(5);
-			WPI_TalonSRX stage2Left= new WPI_TalonSRX(6);
-			//switches
-				DigitalInput stage2TopStop = new DigitalInput(4);
-				DigitalInput stage2BottomStop = new DigitalInput(5);			
-	//carriage
-		//motor
-			WPI_TalonSRX cariage = new WPI_TalonSRX(7);
-				//encoder?
-					Encoder drive_cariage = new Encoder(6,7, false, Encoder.EncodingType.k4X);
-	//pickup
-		//Motors must run together
-		WPI_TalonSRX pickupRight = new WPI_TalonSRX(8);
-		WPI_TalonSRX pickupLeft = new WPI_TalonSRX(9);
-		//sensor
-			DigitalInput cubePresent = new DigitalInput(8);
-	//climb
-		//lock
-			Servo climbLock = new Servo(0);
-			
-	//speeds
-			double pickupSpeed = 1.0;
-			double stage2Speed = 1.0;
-			double cariageSpeed = 1.0;
+	Encoder drive_left = new Encoder(0, 1, false, Encoder.EncodingType.k4X);
+	Encoder drive_right = new Encoder(2, 3, false, Encoder.EncodingType.k4X);	
+	Encoder drive_cariage = new Encoder(4,5, false, Encoder.EncodingType.k4X);
 	
-    public void robotInit() 
+	DigitalInput stage2TopStop = new DigitalInput(6);
+	DigitalInput stage2BottomStop = new DigitalInput(7);
+	DigitalInput cubePresent = new DigitalInput(8);			
+	
+	Joystick left = new Joystick(0);
+	Joystick right = new Joystick(1);
+    
+	double pickupSpeed = 1.0;
+	double stage2Speed = 1.0;
+	double cariageSpeed = 1.0;
+
+    public void autonomousPeriodic() 
     {
-    	m_frontLeft = new WPI_TalonSRX(1);
-    	m_rearLeft = new WPI_TalonSRX(2);
-
-    	m_frontRight = new WPI_TalonSRX(3);
-    	m_rearRight = new WPI_TalonSRX(4);
-
-    	left = new Joystick(0);
-    	right = new Joystick(1);
-    	CameraServer.getInstance().startAutomaticCapture(1);
-    }
-
-    public void autonomousPeriodic() {
 
     }
 
@@ -90,6 +66,8 @@ public class Robot extends TimedRobot{
     	m_rearLeft.set(ControlMode.PercentOutput, left.getRawAxis(1));
     	m_rearRight.set(ControlMode.PercentOutput, right.getRawAxis(1));
     	m_frontRight.set(ControlMode.PercentOutput, right.getRawAxis(1));
+    	
+    	//drive
     	
     	boolean lTrigger = left.getRawButton(1);
 		boolean lFaceB = left.getRawButton(2);
@@ -109,8 +87,6 @@ public class Robot extends TimedRobot{
 		boolean lPRBRight = left.getRawButton(10);
 		int lPOV = left.getPOV();
 		
-		
-		//Right
 		boolean rTrigger = right.getRawButton(1);
 		boolean rFaceB = right.getRawButton(2);
 		boolean rFaceL = right.getRawButton(3);
@@ -138,9 +114,12 @@ public class Robot extends TimedRobot{
 					 pickupRight.set(pickupSpeed * -1);
 					 pickupLeft.set(pickupSpeed * -1);
 					 }
-				else{
+				else
+				{
 					pickupRight.set(pickupSpeed);
-					pickupLeft.set(pickupSpeed);}}
+					pickupLeft.set(pickupSpeed);
+					}
+				}
 			
 	//stage2 logic
 			if(lPOV == 0 || lPOV == 45 || lPOV == 315  && !stage2BottomStop.get())
