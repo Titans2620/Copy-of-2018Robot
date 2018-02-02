@@ -23,9 +23,8 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.BaseMotorController;
 import edu.wpi.first.wpilibj.CameraServer;
 
-public class Robot extends TimedRobot{
-	
-	
+public class Robot extends TimedRobot {
+
 	WPI_TalonSRX m_frontLeft = new WPI_TalonSRX(1);
 	WPI_TalonSRX m_rearLeft = new WPI_TalonSRX(2);	
 	WPI_TalonSRX m_frontRight = new WPI_TalonSRX(3);
@@ -48,28 +47,26 @@ public class Robot extends TimedRobot{
 	
 	Joystick left = new Joystick(0);
 	Joystick right = new Joystick(1);
-    
+	
 	double pickupSpeed = 1.0;
 	double stage2Speed = 1.0;
 	double cariageSpeed = 1.0;
 
-    public void autonomousPeriodic() 
-    {
+	public void autonomousPeriodic() 
+	{
 
-    }
+	}
 
-    public void  teleopPeriodic() 
-    {
-    	
-    	
-    	m_frontLeft.set(ControlMode.PercentOutput, left.getY());
-    	m_rearLeft.set(ControlMode.PercentOutput, left.getRawAxis(1));
-    	m_rearRight.set(ControlMode.PercentOutput, right.getRawAxis(1));
-    	m_frontRight.set(ControlMode.PercentOutput, right.getRawAxis(1));
-    	
-    	//drive
-    	
-    	boolean lTrigger = left.getRawButton(1);
+	public void  teleopPeriodic() 
+	{
+		m_frontLeft.set(ControlMode.PercentOutput, left.getY());
+		m_rearLeft.set(ControlMode.PercentOutput, left.getRawAxis(1));
+		m_rearRight.set(ControlMode.PercentOutput, right.getRawAxis(1));
+		m_frontRight.set(ControlMode.PercentOutput, right.getRawAxis(1));
+		
+		//drive
+		
+		boolean lTrigger = left.getRawButton(1);
 		boolean lFaceB = left.getRawButton(2);
 		boolean lFaceL = left.getRawButton(3);
 		boolean lFaceR = left.getRawButton(4);
@@ -85,7 +82,7 @@ public class Robot extends TimedRobot{
 		boolean lPRBLeft = left.getRawButton(8);
 		boolean lPRBCenter = left.getRawButton(9);
 		boolean lPRBRight = left.getRawButton(10);
-		int lPOV = left.getPOV();
+		int lPOV = left.getPOV();  // Top Directional Thumb on joystick
 		
 		boolean rTrigger = right.getRawButton(1);
 		boolean rFaceB = right.getRawButton(2);
@@ -103,61 +100,50 @@ public class Robot extends TimedRobot{
 		boolean rPRBLeft = right.getRawButton(8);
 		boolean rPRBCenter = right.getRawButton(9);
 		boolean rPRBRight = right.getRawButton(10);
-		int rPOV = left.getPOV();
+		int rPOV = left.getPOV();  // Top Directional Thumb on joystick
 	
 		
-			//pickup logic
-			if(rTrigger) 
-			{
-				if(cubePresent.get())
-				{
-					 pickupRight.set(pickupSpeed * -1);
-					 pickupLeft.set(pickupSpeed * -1);
-					 }
-				else
-				{
-					pickupRight.set(pickupSpeed);
-					pickupLeft.set(pickupSpeed);
-					}
-				}
-			
-	//stage2 logic
-			if(lPOV == 0 || lPOV == 45 || lPOV == 315  && !stage2BottomStop.get())
-			{
-				stage2Right.set(stage2Speed);
-				stage2Left.set(stage2Speed);
+		// Pickup Logic
+		if(rTrigger) {
+			if(cubePresent.get()) {
+				pickupRight.set(pickupSpeed * -1);
+				pickupLeft.set(pickupSpeed * -1);
+			} else {
+				pickupRight.set(pickupSpeed);
+				pickupLeft.set(pickupSpeed);
 			}
-			if(lPOV == 180 || rPOV == 285 || rPOV == 135 && !stage2TopStop.get())
-			{
-				stage2Right.set(stage2Speed * -1);
-				stage2Left.set(stage2Speed * -1);
-			}
-			if (lPOV == -1)
-			{
-				stage2Right.set(0.0);
-				stage2Left.set(0.0);
-			}
-		
-	//climb logic
-			if(lTrigger)
-			{
-				climbLock.set(.65);
-			}
-			else
-			{
-				climbLock.set(0);
-			}
-	//carriage
-			if(rPOV == 180 || rPOV == 285 || rPOV == 135)
-			{
-				cariage.set(cariageSpeed * 1);
-			}
-			if(rPOV == 0 || lPOV == 45 || lPOV == 315)
-			{
-				cariage.set(cariageSpeed);
-			}
-			
-		
 		}
-    }
 
+		// Stage 2 Logic
+		if(lPOV == 0 || lPOV == 45 || lPOV == 315  && !stage2BottomStop.get()) {
+			stage2Right.set(stage2Speed);
+			stage2Left.set(stage2Speed);
+		}
+
+		if(lPOV == 180 || rPOV == 285 || rPOV == 135 && !stage2TopStop.get()) {
+			stage2Right.set(stage2Speed * -1);
+			stage2Left.set(stage2Speed * -1);
+		}
+
+		if (lPOV == -1) {
+			stage2Right.set(0.0);
+			stage2Left.set(0.0);
+		}
+
+		// Climb logic
+		if(lTrigger) {
+			climbLock.set(.65);
+		} else {
+			climbLock.set(0);
+		}
+
+		// Carriage
+		if(rPOV == 180 || rPOV == 285 || rPOV == 135) {
+			cariage.set(cariageSpeed * 1);
+		}
+
+		if(rPOV == 0 || lPOV == 45 || lPOV == 315) {
+			cariage.set(cariageSpeed);
+		}
+	}
+}
