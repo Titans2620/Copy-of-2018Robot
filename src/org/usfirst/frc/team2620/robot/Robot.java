@@ -95,7 +95,7 @@ public class Robot extends TimedRobot {
 
 			if(shouldPlaceLeft) {
 				// Put left auto code here
-			} else if (shouldPlaceRight)
+			} else if (shouldPlaceRight) {
 				// Put right auto code here
 			} else {
 				driveForwardOnly();
