@@ -24,7 +24,7 @@ import com.ctre.phoenix.motorcontrol.can.BaseMotorController;
 import edu.wpi.first.wpilibj.CameraServer;
 
 public class Robot extends TimedRobot {
-
+	
 	WPI_TalonSRX m_frontLeft = new WPI_TalonSRX(1);
 	WPI_TalonSRX m_rearLeft = new WPI_TalonSRX(2);	
 	WPI_TalonSRX m_frontRight = new WPI_TalonSRX(3);
@@ -52,9 +52,65 @@ public class Robot extends TimedRobot {
 	double stage2Speed = 1.0;
 	double cariageSpeed = 1.0;
 
-	public void autonomousPeriodic() 
-	{
+	// Auton Vars
+	Timer autonTimer;
+	SendableChooser autonChooser;
+	int autonMode;
+	String autonGameData;
+	double autonDriveSpeed = 0.4; // In % Power
+	double autonDriveTime = 10; // Game Time In Seconds (NOT RUNNING TIME)
+	
+	public void robotInit() {
+		autonChooser = new SendableChooser();
+		autonChooser.addDefault("Drive Forward ONLY", 1);
+		autonChooser.addObject("Left & Target Possible", 2);
+		autonChooser.addObject("Right & Target Possible", 3);
+	}
 
+	public void autonomousInit() {
+		autonGameData = DriverStation.getInstance().getGameSpecificMessage();
+		autonMode = (int) chooser.getSelected();
+		autonTimer = new Timer();
+	}
+
+	public void autonomousPeriodic()
+	{
+		void driveForwardOnly()
+		{
+			double speed = autonDriveSpeed;
+			if(autonTimer.getMatchTime() >= autonDriveTime) {
+				speed = 0.0;
+			}
+
+			m_frontLeft.set(ControlMode.PercentOutput, speed);
+			m_rearLeft.set(ControlMode.PercentOutput, speed);
+			m_rearRight.set(ControlMode.PercentOutput, speed);
+			m_frontRight.set(ControlMode.PercentOutput, speed);
+		}
+
+		void placeInTarget() 
+		{
+			boolean shouldPlaceLeft = (autonGameData.charAt(0) == 'L' && autonMode == 2);
+			boolean shouldPlaceRight = (autonGameData.charAt(0) == 'R' && autonMode == 3);
+
+			if(shouldPlaceLeft) {
+				// Put left auto code here
+			} else if (shouldPlaceRight)
+				// Put right auto code here
+			} else {
+				driveForwardOnly();
+			}
+		}
+
+		switch(autonMode) {
+			case 2:
+			case 3:
+				placeInTarget();
+				break;
+			default:
+				driveForwardOnly();
+				break;
+		}
 	}
 
 	public void  teleopPeriodic() 
