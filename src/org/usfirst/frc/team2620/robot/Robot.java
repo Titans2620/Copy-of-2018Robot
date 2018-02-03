@@ -112,7 +112,7 @@ public class Robot extends TimedRobot {
 
 	public void  teleopPeriodic() 
 	{
-		driveRight.set(ControlMode.PercentOutput, left.getY());
+		driveRight.set(ControlMode.PercentOutput, left.getY() * -1);
 		driveLeft.set(ControlMode.PercentOutput, right.getRawAxis(1));
 		
 		boolean lTrigger = left.getRawButton(1);
