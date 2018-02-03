@@ -25,10 +25,9 @@ import edu.wpi.first.wpilibj.CameraServer;
 
 public class Robot extends TimedRobot {
 	
-	WPI_TalonSRX m_frontLeft = new WPI_TalonSRX(1);
-	WPI_TalonSRX m_rearLeft = new WPI_TalonSRX(2);	
-	WPI_TalonSRX m_frontRight = new WPI_TalonSRX(3);
-	WPI_TalonSRX m_rearRight = new WPI_TalonSRX(4);
+	WPI_TalonSRX driveRight = new WPI_TalonSRX(1);
+	WPI_TalonSRX driveLeft = new WPI_TalonSRX(5);
+
 	WPI_TalonSRX stage2Right = new WPI_TalonSRX(5);
 	WPI_TalonSRX stage2Left= new WPI_TalonSRX(6);
 	WPI_TalonSRX cariage = new WPI_TalonSRX(7);
@@ -69,58 +68,52 @@ public class Robot extends TimedRobot {
 
 	public void autonomousInit() {
 		autonGameData = DriverStation.getInstance().getGameSpecificMessage();
-		autonMode = (int) chooser.getSelected();
+		autonMode = (int) autonChooser.getSelected();
 		autonTimer = new Timer();
 	}
 
 	public void autonomousPeriodic()
 	{
-		void driveForwardOnly()
-		{
-			double speed = autonDriveSpeed;
-			if(autonTimer.getMatchTime() >= autonDriveTime) {
-				speed = 0.0;
-			}
+		// void driveForwardOnly()
+		// {
+		// 	double speed = autonDriveSpeed;
+		// 	if(autonTimer.getMatchTime() >= autonDriveTime) {
+		// 		speed = 0.0;
+		// 	}
 
-			m_frontLeft.set(ControlMode.PercentOutput, speed);
-			m_rearLeft.set(ControlMode.PercentOutput, speed);
-			m_rearRight.set(ControlMode.PercentOutput, speed);
-			m_frontRight.set(ControlMode.PercentOutput, speed);
-		}
+		// 	driveRight.set(ControlMode.PercentOutput, speed);
+		// 	driveLeft.set(ControlMode.PercentOutput, speed);
+		// }
 
-		void placeInTarget() 
-		{
-			boolean shouldPlaceLeft = (autonGameData.charAt(0) == 'L' && autonMode == 2);
-			boolean shouldPlaceRight = (autonGameData.charAt(0) == 'R' && autonMode == 3);
+		// void placeInTarget() 
+		// {
+		// 	boolean shouldPlaceLeft = (autonGameData.charAt(0) == 'L' && autonMode == 2);
+		// 	boolean shouldPlaceRight = (autonGameData.charAt(0) == 'R' && autonMode == 3);
 
-			if(shouldPlaceLeft) {
-				// Put left auto code here
-			} else if (shouldPlaceRight) {
-				// Put right auto code here
-			} else {
-				driveForwardOnly();
-			}
-		}
+		// 	if(shouldPlaceLeft) {
+		// 		// Put left auto code here
+		// 	} else if (shouldPlaceRight) {
+		// 		// Put right auto code here
+		// 	} else {
+		// 		driveForwardOnly();
+		// 	}
+		// }
 
-		switch(autonMode) {
-			case 2:
-			case 3:
-				placeInTarget();
-				break;
-			default:
-				driveForwardOnly();
-				break;
-		}
+		// switch(autonMode) {
+		// 	case 2:
+		// 	case 3:
+		// 		placeInTarget();
+		// 		break;
+		// 	default:
+		// 		driveForwardOnly();
+		// 		break;
+		// }
 	}
 
 	public void  teleopPeriodic() 
 	{
-		m_frontLeft.set(ControlMode.PercentOutput, left.getY());
-		m_rearLeft.set(ControlMode.PercentOutput, left.getRawAxis(1));
-		m_rearRight.set(ControlMode.PercentOutput, right.getRawAxis(1));
-		m_frontRight.set(ControlMode.PercentOutput, right.getRawAxis(1));
-		
-		//drive
+		driveRight.set(ControlMode.PercentOutput, left.getY());
+		driveLeft.set(ControlMode.PercentOutput, right.getRawAxis(1));
 		
 		boolean lTrigger = left.getRawButton(1);
 		boolean lFaceB = left.getRawButton(2);
