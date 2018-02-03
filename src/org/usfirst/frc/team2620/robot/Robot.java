@@ -28,7 +28,7 @@ public class Robot extends TimedRobot {
 	WPI_TalonSRX driveRight = new WPI_TalonSRX(1);
 	WPI_TalonSRX driveLeft = new WPI_TalonSRX(5);
 
-	WPI_TalonSRX stage2Right = new WPI_TalonSRX(5);
+	WPI_TalonSRX stage2Right = new WPI_TalonSRX(2);
 	WPI_TalonSRX stage2Left= new WPI_TalonSRX(6);
 	WPI_TalonSRX cariage = new WPI_TalonSRX(7);
 	WPI_TalonSRX pickupRight = new WPI_TalonSRX(8);
