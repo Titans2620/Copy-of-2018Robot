@@ -288,9 +288,15 @@ public class Robot extends TimedRobot {
 		}
 	}
 
+	public void teleopInit() {
+		gyro.reset();
+	}
+
 	public void  teleopPeriodic() 
 	{
 		drive(left.getY(), right.getY());
+
+		System.out.println('Gyro:', gyro.getAngle());
 		
 		boolean lTrigger = left.getRawButton(1);
 		boolean lFaceB = left.getRawButton(2);
@@ -327,7 +333,7 @@ public class Robot extends TimedRobot {
 		boolean rPRBCenter = right.getRawButton(9);
 		boolean rPRBRight = right.getRawButton(10);
 		int rPOV = left.getPOV();  // Top Directional Thumb on joystick
-	
+		
 		
 		// Pickup Logic
 		if(rTrigger) {
