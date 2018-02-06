@@ -24,6 +24,7 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.BaseMotorController;
 
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.CameraServer;
 
@@ -45,7 +46,7 @@ public class Robot extends TimedRobot {
 	Encoder driveCarriageEncoder = new Encoder(4,5, false, Encoder.EncodingType.k4X);
 	
 	Ultrasonic frontDistance = new Ultrasonic(9, 10);
-	Gyro gyro = new AnalogGyro(1);
+	ADXRS450_Gyro gyro;
 	
 	DigitalInput stage2TopStop = new DigitalInput(6);
 	DigitalInput stage2BottomStop = new DigitalInput(7);
@@ -76,6 +77,8 @@ public class Robot extends TimedRobot {
 		// Setup Camera
 		// TODO: Setup camera server here..
 		// TODO: ROBOT NEEDS GYRO AND ULTRASONIC AND CAMERA AND LIMIT SWITCHES
+		
+		gyro = new ADXRS450_Gyro();
 
 		// Setup Encoders, https://wpilib.screenstepslive.com/s/currentCS/m/java/l/599717-encoders-measuring-rotation-of-a-wheel-or-other-shaft
 		driveLeftEncoder.setMaxPeriod(.1);
