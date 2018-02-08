@@ -60,7 +60,8 @@ public class Robot extends TimedRobot {
 	double pickupSpeed = 1.0;
 	double stage2Speed = 1.0;
 	double carriageSpeed = 1.0;
-
+	boolean pickUpMotion = false;
+	
 	// Auton Vars
 	private Timer autonTimer;
 	private SendableChooser<Integer> autonChooser;
@@ -365,15 +366,16 @@ public class Robot extends TimedRobot {
 		
 		// Pickup Logic
 		if(rTrigger) {
-			if(cubePresent.get()) {
-				pickup(pickupSpeed * -1);
-			} else {
-				pickup(pickupSpeed);
+			pickupRight.set(pickupSpeed);
+			pickupLeft.set(pickupSpeed);
+			pickUpMotion = true;}
+		
+		if(pickUpMotion = true) {
+			if(cubePresent.get()){
+				pickupRight.set(0.0);
+				pickupLeft.set(0.0);
+				pickUpMotion =false;
 			}
-		} else {
-			pickup(0.0);
-		}
-
 		// Stage 2 Logic
 		if(lPOV == 0 || lPOV == 45 || lPOV == 315  && !stage2BottomStop.get()) {
 			stage2Right.set(stage2Speed);
