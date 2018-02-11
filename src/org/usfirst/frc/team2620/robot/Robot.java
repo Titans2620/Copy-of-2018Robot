@@ -374,60 +374,43 @@ public class Robot extends TimedRobot {
 			if(cubePresent.get()){
 				pickupRight.set(0.0);
 				pickupLeft.set(0.0);
-				pickUpMotion = false;
+				pickUpMotion =false;
 			}
+		// Stage 2 Logic
+		if(lPOV == 0 || lPOV == 45 || lPOV == 315  && !stage2BottomStop.get()) {
+			stage2Right.set(stage2Speed);
+			stage2Left.set(stage2Speed);
+		}
+
+		if(lPOV == 180 || rPOV == 285 || rPOV == 135 && !stage2TopStop.get()) {
+			stage2Right.set(stage2Speed * -1);
+			stage2Left.set(stage2Speed * -1);
+		}
+
+		if (lPOV == -1) {
+			stage2Right.set(0.0);
+			stage2Left.set(0.0);
+		}
 
 		// Climb logic
-		if(lTrigger) {
+		if(lTrigger) 
+		{
 			climbLock.set(.65);
-		} else {
+		}
+		else 
+		{
 			climbLock.set(0);
 		}
 
-		// Carriage & Stage2
-		//down
-		if(rPOV == 180 || rPOV == 285 || rPOV == 135)
+		// Carriage
+		if(rPOV == 180 || rPOV == 285 || rPOV == 135) 
 		{
-			if(carriageBottomStop.get())
-			{
-				carriage.set(0);
-			}
-			else
-			{
-				carriage.set( carriageSpeed * -1);
-			}
-			if(stage2BottomStop.get())
-			{
-				stage2Left.set(0);
-				stage2Right.set(0);
-			}
-			else
-			{
-				stage2Left.set(stage2Speed * -1);
-				stage2Right.set(stage2Speed * -1);
-			}
-		}	
-		//up
-		if(rPOV == 0 || lPOV == 45 || lPOV == 315) 
+			carriage.set(carriageSpeed * 1);
+		}
+
+		if(rPOV == 0 || lPOV == 45 || lPOV == 315)
 		{
-			if(carriageBottomStop.get())
-			{
-				carriage.set(0);
-			}
-			else
-			{
-				carriage.set( carriageSpeed);
-			}
-			if(stage2BottomStop.get())
-			{
-				stage2Left.set(0);
-				stage2Right.set(0);
-			}
-			else
-			{
-				stage2Left.set(stage2Speed);
-				stage2Right.set(stage2Speed);
-			}
+			carriage.set(carriageSpeed);
 		}
 		
 		
