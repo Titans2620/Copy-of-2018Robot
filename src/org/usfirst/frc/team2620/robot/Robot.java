@@ -390,11 +390,14 @@ public class Robot extends TimedRobot {
 		}
 
 		// Climb logic
-		if(lTrigger) {
-			climbLock.set(.65);
-		} else {
-			climbLock.set(0);
-		}
+		// if(lTrigger) 
+		// {
+		// 	climbLock.set(.65);
+		// }
+		// else 
+		// {
+		// 	climbLock.set(0);
+		// }
 
 		// Carriage
 		if(rPOV == 180 || rPOV == 285 || rPOV == 135) {

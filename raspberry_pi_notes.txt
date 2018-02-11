@@ -1,0 +1,2 @@
+https://raspberrypi.stackexchange.com/questions/69169/how-to-install-opencv-on-raspberry-pi-3-in-raspbian-jessie
+https://github.com/FRC5254/GRIP-Raspberry-Pi-3
