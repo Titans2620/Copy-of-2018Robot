@@ -1,31 +1,22 @@
 package org.usfirst.frc.team2620.robot;
 
-import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import edu.wpi.first.wpilibj.interfaces.Gyro;
-import edu.wpi.first.wpilibj.SpeedControllerGroup;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Ultrasonic;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.cscore.VideoSource;
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Encoder;
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-import com.ctre.phoenix.motorcontrol.can.BaseMotorController;
 
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
-import edu.wpi.first.wpilibj.AnalogGyro;
 import edu.wpi.first.wpilibj.CameraServer;
 
 public class Robot extends TimedRobot {
@@ -35,7 +26,7 @@ public class Robot extends TimedRobot {
 
 	WPI_TalonSRX stage2Right = new WPI_TalonSRX(2);
 	WPI_TalonSRX stage2Left= new WPI_TalonSRX(2);
-	WPI_TalonSRX carriage = new WPI_TalonSRX(3);
+	WPI_TalonSRX carriageMotor = new WPI_TalonSRX(3);
 	WPI_TalonSRX pickupRight = new WPI_TalonSRX(6);
 	WPI_TalonSRX pickupLeft = new WPI_TalonSRX(7);
 	
@@ -43,16 +34,14 @@ public class Robot extends TimedRobot {
 	
 	Encoder driveLeftEncoder = new Encoder(0, 1, false, Encoder.EncodingType.k4X);
 	Encoder driveRightEncoder = new Encoder(2, 3, false, Encoder.EncodingType.k4X);	
-	Encoder driveCarriageEncoder = new Encoder(4,5, false, Encoder.EncodingType.k4X);
 	
-	Ultrasonic frontDistance; // = new Ultrasonic(9, 10);
+	Ultrasonic frontDistance = new Ultrasonic(8, 9);
 	ADXRS450_Gyro gyro;
 	
-	DigitalInput stage2TopStop = new DigitalInput(6);
-	DigitalInput stage2BottomStop = new DigitalInput(7);
-	DigitalInput cubePresent = new DigitalInput(8);		
-	DigitalInput carriageTopStop = new DigitalInput(9);
-	DigitalInput carriageBottomStop = new DigitalInput(10);	
+	DigitalInput stage2TopStop = new DigitalInput(4);
+	DigitalInput stage2BottomStop = new DigitalInput(5);
+	DigitalInput carriageTopStop = new DigitalInput(6);
+	DigitalInput carriageBottomStop = new DigitalInput(7);	
 	
 	Joystick left = new Joystick(0);
 	Joystick right = new Joystick(1);
@@ -60,28 +49,29 @@ public class Robot extends TimedRobot {
 	double pickupSpeed = 1.0;
 	double stage2Speed = 1.0;
 	double carriageSpeed = 1.0;
-	boolean pickUpMotion = false;
 	
 	// Auton Vars
-	private Timer autonTimer;
 	private SendableChooser<Integer> autonChooser;
 	private int autonMode;
 	private String autonGameData;
 	private double autonDriveSpeed = 0.2; // In % Power
-	private double autonDriveTime = 10; // Game Time In Seconds (NOT RUNNING TIME)
 	private int autonStraightOnlyDistance = 5 * 12;
 	private boolean auton_atTarget = false;
 	private boolean auton_centered = false;
 	private boolean auton_atHeight = false;
 	private String auton_sideLastSeen; // Side relevent to the robot. L from gamedata would mean its on the right by default
 	
-	public void robotInit() {
-		// Setup Camera
-		// TODO: Setup camera server here..
-		// TODO: ROBOT NEEDS GYRO AND ULTRASONIC AND CAMERA AND LIMIT SWITCHES
-		
+	public void robotInit()
+	{
+		// TODO: ROBOT NEEDS ULTRASONIC AND CAMERA AND LIMIT SWITCHES
+		CameraServer.getInstance().startAutomaticCapture();
+
 		gyro = new ADXRS450_Gyro();
 		gyro.calibrate();
+
+		driveLeft.setInverted(true);
+		pickupLeft.setInverted(true);
+		stage2Left.setInverted(true);
 
 		// Setup Encoders, https://wpilib.screenstepslive.com/s/currentCS/m/java/l/599717-encoders-measuring-rotation-of-a-wheel-or-other-shaft
 		driveLeftEncoder.setMaxPeriod(.1);
@@ -106,19 +96,54 @@ public class Robot extends TimedRobot {
 		SmartDashboard.putData("Auton Mode", autonChooser);
 	}
 
-	public void drive(double left, double right) {
+	public void drive(double left, double right)
+	{
 		// Powers the drives motors, guarantees positive is forward for both left & right
+		if(!stage2BottomStop.get()) {
+			left *= 0.5;
+			right *= 0.5;
+		}
+
 		driveRight.set(ControlMode.PercentOutput, right);
-		driveLeft.set(ControlMode.PercentOutput, left * -1.0);
+		driveLeft.set(ControlMode.PercentOutput, left);
 	}
 
-	public void pickup(double speed) {
+	public void pickup(double speed)
+	{
 		// Runs both left and right pickup motors at the same time
 		pickupRight.set(speed);
 		pickupLeft.set(speed);
 	}
+	
+	public void lift(double speed) 
+	{
+		if(stage2BottomStop.get() && speed > 0) {
+			speed = 0.0;
+		}
+		
+		if(stage2TopStop.get() && speed < 0) {
+			speed = 0.0;
+		}
 
-	public void autonomousInit() {
+		stage2Right.set(speed);
+		stage2Left.set(speed);
+	}
+	
+	public void carriage(double speed) 
+	{
+		if(carriageTopStop.get() && speed > 0) {
+			speed = 0.0;
+		}
+		
+		if(carriageBottomStop.get() && speed < 0) {
+			speed = 0.0;
+		}
+
+		carriageMotor.set(speed);
+	}
+
+	public void autonomousInit()
+	{
 		gyro.reset();
 		
 		auton_atTarget = false;
@@ -127,8 +152,7 @@ public class Robot extends TimedRobot {
 
 		autonGameData = DriverStation.getInstance().getGameSpecificMessage();
 		autonMode = (int) autonChooser.getSelected();
-		autonTimer = new Timer();
-		// frontDistance.setAutomaticMode(true);
+		frontDistance.setAutomaticMode(true);
 		driveLeftEncoder.reset();
 		driveRightEncoder.reset();
 	}
@@ -170,7 +194,7 @@ public class Robot extends TimedRobot {
 			// If our switch isnt on robots side, just drive past black line
 			auton_driveStraightDistance(autonStraightOnlyDistance);
 		} else {
-			if(autonTimer.getMatchTime() < 1.0) {
+			if(Timer.getMatchTime() < 1.0) {
 				drive(autonDriveSpeed, autonDriveSpeed);
 			} else {
 	
@@ -251,21 +275,8 @@ public class Robot extends TimedRobot {
 			} else if (!auton_atHeight) {
 				// Move to required height to place on scale
 	
-				if(!stage2TopStop.get()) {
-					// Move Stage 2 To Top
-					stage2Right.set(stage2Speed * -1);
-					stage2Left.set(stage2Speed * -1);
-				} else {
-					stage2Right.set(0.0);
-					stage2Left.set(0.0);
-				}
-	
-				if(!carriageTopStop.get()) {
-					// Move Carriage To Top
-					carriage.set(carriageSpeed * 1);
-				} else {
-					carriage.set(0.0);
-				}
+				lift(stage2Speed);
+				carriage(carriageSpeed);
 	
 				if(carriageTopStop.get() && stage2TopStop.get()) {
 					auton_atHeight = true;
@@ -366,30 +377,16 @@ public class Robot extends TimedRobot {
 		
 		// Pickup Logic
 		if(rTrigger) {
-			pickupRight.set(pickupSpeed);
-			pickupLeft.set(pickupSpeed);
-			pickUpMotion = true;}
-		
-		if(pickUpMotion = true) {
-			if(cubePresent.get()){
-				pickupRight.set(0.0);
-				pickupLeft.set(0.0);
-				pickUpMotion =false;
-			}
+			pickup(pickupSpeed);
+		} else {
+			pickup(0.0);
+		}
+
 		// Stage 2 Logic
-		if(lPOV == 0 || lPOV == 45 || lPOV == 315  && !stage2BottomStop.get()) {
-			stage2Right.set(stage2Speed);
-			stage2Left.set(stage2Speed);
-		}
-
-		if(lPOV == 180 || rPOV == 285 || rPOV == 135 && !stage2TopStop.get()) {
-			stage2Right.set(stage2Speed * -1);
-			stage2Left.set(stage2Speed * -1);
-		}
-
-		if (lPOV == -1) {
-			stage2Right.set(0.0);
-			stage2Left.set(0.0);
+		if(lPOV == 0 || lPOV == 45 || lPOV == 315) {
+			lift(stage2Speed);
+		} else if(lPOV == 180 || rPOV == 285 || rPOV == 135) {
+			lift(stage2Speed * -1);
 		}
 
 		// Climb logic
@@ -401,11 +398,11 @@ public class Robot extends TimedRobot {
 
 		// Carriage
 		if(rPOV == 180 || rPOV == 285 || rPOV == 135) {
-			carriage.set(carriageSpeed * 1);
+			carriage(carriageSpeed);
 		}
 
 		if(rPOV == 0 || lPOV == 45 || lPOV == 315) {
-			carriage.set(carriageSpeed);
+			carriage(carriageSpeed * -1);
 		}
 	}
 }
