@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Encoder;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
@@ -25,23 +26,23 @@ public class Robot extends TimedRobot {
 	WPI_TalonSRX driveLeft = new WPI_TalonSRX(1);
 
 	WPI_TalonSRX stage2Right = new WPI_TalonSRX(2);
-	WPI_TalonSRX stage2Left= new WPI_TalonSRX(2);
-	WPI_TalonSRX carriageMotor = new WPI_TalonSRX(3);
-	WPI_TalonSRX pickupRight = new WPI_TalonSRX(6);
-	WPI_TalonSRX pickupLeft = new WPI_TalonSRX(7);
+	WPI_TalonSRX stage2Left = new WPI_TalonSRX(6);
+	WPI_TalonSRX carriageMotor = new WPI_TalonSRX(7);
+	WPI_TalonSRX pickupRight = new WPI_TalonSRX(3);
+	WPI_TalonSRX pickupLeft = new WPI_TalonSRX(4);
 	
 	Servo climbLock = new Servo(0);
 	
-	Encoder driveLeftEncoder = new Encoder(0, 1, false, Encoder.EncodingType.k4X);
-	Encoder driveRightEncoder = new Encoder(2, 3, false, Encoder.EncodingType.k4X);	
+	Encoder driveLeftEncoder = new Encoder(3, 5, false, Encoder.EncodingType.k4X);
+	Encoder driveRightEncoder = new Encoder(6, 7, false, Encoder.EncodingType.k4X);	
 	
 	Ultrasonic frontDistance = new Ultrasonic(8, 9);
 	ADXRS450_Gyro gyro;
 	
-	DigitalInput stage2TopStop = new DigitalInput(4);
-	DigitalInput stage2BottomStop = new DigitalInput(5);
-	DigitalInput carriageTopStop = new DigitalInput(6);
-	DigitalInput carriageBottomStop = new DigitalInput(7);	
+	DigitalInput stage2TopStop = new DigitalInput(2);
+	DigitalInput stage2BottomStop = new DigitalInput(4);
+	DigitalInput carriageTopStop = new DigitalInput(1);
+	DigitalInput carriageBottomStop = new DigitalInput(0);	
 	
 	Joystick left = new Joystick(0);
 	Joystick right = new Joystick(1);
@@ -64,7 +65,7 @@ public class Robot extends TimedRobot {
 	public void robotInit()
 	{
 		// TODO: ROBOT NEEDS ULTRASONIC AND CAMERA AND LIMIT SWITCHES
-		CameraServer.getInstance().startAutomaticCapture();
+		// CameraServer.getInstance().startAutomaticCapture();
 
 		gyro = new ADXRS450_Gyro();
 		gyro.calibrate();
@@ -73,6 +74,9 @@ public class Robot extends TimedRobot {
 		pickupLeft.setInverted(true);
 		stage2Left.setInverted(true);
 
+		pickupLeft.setNeutralMode(NeutralMode.Brake);
+		pickupRight.setNeutralMode(NeutralMode.Brake);
+		
 		// Setup Encoders, https://wpilib.screenstepslive.com/s/currentCS/m/java/l/599717-encoders-measuring-rotation-of-a-wheel-or-other-shaft
 		driveLeftEncoder.setMaxPeriod(.1);
 		driveLeftEncoder.setMinRate(10);
@@ -117,11 +121,11 @@ public class Robot extends TimedRobot {
 	
 	public void lift(double speed) 
 	{
-		if(stage2BottomStop.get() && speed > 0) {
+		if(stage2TopStop.get() && speed > 0) {
 			speed = 0.0;
 		}
 		
-		if(stage2TopStop.get() && speed < 0) {
+		if(stage2BottomStop.get() && speed < 0) {
 			speed = 0.0;
 		}
 
@@ -372,21 +376,27 @@ public class Robot extends TimedRobot {
 		boolean rPRBLeft = right.getRawButton(8);
 		boolean rPRBCenter = right.getRawButton(9);
 		boolean rPRBRight = right.getRawButton(10);
-		int rPOV = left.getPOV();  // Top Directional Thumb on joystick
+		int rPOV = right.getPOV();  // Top Directional Thumb on joystick
 		
 		
 		// Pickup Logic
 		if(rTrigger) {
 			pickup(pickupSpeed);
-		} else {
-			pickup(0.0);
 		}
+		else if(lTrigger) {
+			pickup(pickupSpeed * -1);
+		} 
+		else {
+				pickup(0.1);
+			}
 
 		// Stage 2 Logic
 		if(lPOV == 0 || lPOV == 45 || lPOV == 315) {
 			lift(stage2Speed);
-		} else if(lPOV == 180 || rPOV == 285 || rPOV == 135) {
+		} else if(lPOV == 180 || lPOV == 285 || lPOV == 135) {
 			lift(stage2Speed * -1);
+		} else {
+			lift(0.0);
 		}
 
 		// Climb logic
@@ -401,11 +411,37 @@ public class Robot extends TimedRobot {
 
 		// Carriage
 		if(rPOV == 180 || rPOV == 285 || rPOV == 135) {
-			carriage(carriageSpeed);
-		}
-
-		if(rPOV == 0 || lPOV == 45 || lPOV == 315) {
 			carriage(carriageSpeed * -1);
+		} else if(rPOV == 0 || rPOV == 45 || rPOV == 315) {
+			carriage(carriageSpeed);
+		} else {
+			carriage(0.1);
 		}
+	}
+	
+	
+	public void testPeriodic() {
+
+		/*boolean lTrigger = left.getRawButton(1);
+		boolean rTrigger = right.getRawButton(1);
+		
+		if(lTrigger) {
+			carriage(1.0);
+		} else {
+			if(rTrigger) {
+				carriage(-1.0);
+			} else {
+				carriage(0.1);
+			}
+		}*/
+		
+//		System.out.println("stage2TopStop");
+//		System.out.println(stage2TopStop.get());
+//		System.out.println("stage2BottomStop");
+//		System.out.println(stage2BottomStop.get());
+//		System.out.println("carriageTopStop");
+//		System.out.println(carriageTopStop.get());
+//		System.out.println("carriageBottomStop");
+//		System.out.println(carriageBottomStop.get());
 	}
 }
