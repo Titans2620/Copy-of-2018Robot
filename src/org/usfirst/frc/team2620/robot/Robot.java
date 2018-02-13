@@ -31,7 +31,8 @@ public class Robot extends TimedRobot {
 	WPI_TalonSRX pickupRight = new WPI_TalonSRX(3);
 	WPI_TalonSRX pickupLeft = new WPI_TalonSRX(4);
 	
-	Servo climbLock = new Servo(0);
+	Servo RclimbLock = new Servo(0);
+	
 	
 	Encoder driveLeftEncoder = new Encoder(3, 5, false, Encoder.EncodingType.k4X);
 	Encoder driveRightEncoder = new Encoder(6, 7, false, Encoder.EncodingType.k4X);	
@@ -50,6 +51,7 @@ public class Robot extends TimedRobot {
 	double pickupSpeed = 1.0;
 	double stage2Speed = 1.0;
 	double carriageSpeed = 1.0;
+	
 	
 	// Auton Vars
 	private SendableChooser<Integer> autonChooser;
@@ -98,6 +100,7 @@ public class Robot extends TimedRobot {
 		autonChooser.addObject("TARGET SCALE -- ROBOT is LEFT", 4);
 		autonChooser.addObject("TARGET SCALE -- ROBOT is RIGHT", 5);
 		SmartDashboard.putData("Auton Mode", autonChooser);
+		boolean Locked = false;
 	}
 
 	public void drive(double left, double right)
@@ -378,10 +381,18 @@ public class Robot extends TimedRobot {
 		boolean rPRBRight = right.getRawButton(10);
 		int rPOV = right.getPOV();  // Top Directional Thumb on joystick
 		
+		//lock
+		
+		
+		if(left.getRawButton(11)){
+				RclimbLock.setAngle(45);
+				
+			}
 		
 		// Pickup Logic
 		if(rTrigger) {
 			pickup(pickupSpeed);
+			
 		}
 		else if(lTrigger) {
 			pickup(pickupSpeed * -1);
