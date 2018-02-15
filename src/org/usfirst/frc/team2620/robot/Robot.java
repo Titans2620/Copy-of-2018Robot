@@ -32,7 +32,7 @@ public class Robot extends TimedRobot {
 	WPI_TalonSRX pickupLeft = new WPI_TalonSRX(4);
 	
 	Servo RclimbLock = new Servo(0);
-	
+	Servo LclimbLock = new Servo(1);
 	
 	Encoder driveLeftEncoder = new Encoder(3, 5, false, Encoder.EncodingType.k4X);
 	Encoder driveRightEncoder = new Encoder(6, 7, false, Encoder.EncodingType.k4X);	
@@ -386,8 +386,13 @@ public class Robot extends TimedRobot {
 		
 		if(left.getRawButton(11)){
 				RclimbLock.setAngle(45);
+				LclimbLock.setAngle(0);
 				
 			}
+		
+		
+		
+		//System.out.println(left.getRawAxis(3));
 		
 		// Pickup Logic
 		if(rTrigger) {
