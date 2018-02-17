@@ -45,8 +45,8 @@ public class Robot extends TimedRobot {
 	DigitalInput carriageTopStop = new DigitalInput(1);
 	DigitalInput carriageBottomStop = new DigitalInput(0);	
 	
-	Joystick left = new Joystick(0);
-	Joystick right = new Joystick(1);
+	Joystick left = new Joystick(1);
+	Joystick right = new Joystick(0);
 	
 	double pickupSpeed = 1.0;
 	double stage2Speed = 1.0;
@@ -403,7 +403,8 @@ public class Robot extends TimedRobot {
 			pickup(pickupSpeed * -1);
 		} 
 		else {
-				pickup(0.1);
+			// set to 0.1 for operation
+				pickup(0);
 			}
 
 		// Stage 2 Logic
@@ -457,7 +458,7 @@ public class Robot extends TimedRobot {
 //		System.out.println(stage2BottomStop.get());
 //		System.out.println("carriageTopStop");
 //		System.out.println(carriageTopStop.get());
-//		System.out.println("carriageBottomStop");
+		System.out.println(carriageBottomStop.get());
 //		System.out.println(carriageBottomStop.get());
 	}
 }
