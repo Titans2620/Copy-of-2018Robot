@@ -22,8 +22,9 @@ import edu.wpi.first.wpilibj.CameraServer;
 
 public class Robot extends TimedRobot {
 	
-	WPI_TalonSRX driveRight = new WPI_TalonSRX(5);
-	WPI_TalonSRX driveLeft = new WPI_TalonSRX(1);
+	
+	WPI_TalonSRX driveRight = new WPI_TalonSRX(1);
+	WPI_TalonSRX driveLeft = new WPI_TalonSRX(5);
 
 	WPI_TalonSRX stage2Right = new WPI_TalonSRX(2);
 	WPI_TalonSRX stage2Left = new WPI_TalonSRX(6);
@@ -33,9 +34,12 @@ public class Robot extends TimedRobot {
 	
 	Servo RclimbLock = new Servo(0);
 	Servo LclimbLock = new Servo(1);
+	Servo arms = new Servo(2);
 	
 	Encoder driveLeftEncoder = new Encoder(3, 5, false, Encoder.EncodingType.k4X);
 	Encoder driveRightEncoder = new Encoder(6, 7, false, Encoder.EncodingType.k4X);	
+	
+	
 	
 	Ultrasonic frontDistance = new Ultrasonic(8, 9);
 	ADXRS450_Gyro gyro;
@@ -45,8 +49,8 @@ public class Robot extends TimedRobot {
 	DigitalInput carriageTopStop = new DigitalInput(1);
 	DigitalInput carriageBottomStop = new DigitalInput(0);	
 	
-	Joystick left = new Joystick(1);
-	Joystick right = new Joystick(0);
+	Joystick left = new Joystick(0);
+	Joystick right = new Joystick(1);
 	
 	double pickupSpeed = 1.0;
 	double stage2Speed = 1.0;
@@ -71,8 +75,8 @@ public class Robot extends TimedRobot {
 
 		gyro = new ADXRS450_Gyro();
 		gyro.calibrate();
-
-		driveLeft.setInverted(true);
+		
+		driveRight.setInverted(true);
 		pickupLeft.setInverted(true);
 		stage2Left.setInverted(true);
 
@@ -343,7 +347,9 @@ public class Robot extends TimedRobot {
 
 	public void  teleopPeriodic() 
 	{
-		drive(left.getY(), right.getY());
+		
+		driveRight.set(ControlMode.PercentOutput, right.getRawAxis(1));
+		driveLeft.set(ControlMode.PercentOutput, left.getRawAxis(1));
 		
 		boolean lTrigger = left.getRawButton(1);
 		boolean lFaceB = left.getRawButton(2);
@@ -387,7 +393,6 @@ public class Robot extends TimedRobot {
 		if(left.getRawButton(11)){
 				RclimbLock.setAngle(45);
 				LclimbLock.setAngle(0);
-				
 			}
 		
 		
@@ -404,7 +409,7 @@ public class Robot extends TimedRobot {
 		} 
 		else {
 			// set to 0.1 for operation
-				pickup(0);
+				pickup(0.1);
 			}
 
 		// Stage 2 Logic
@@ -434,7 +439,15 @@ public class Robot extends TimedRobot {
 		} else {
 			carriage(0.1);
 		}
-	}
+	
+		// OTHER BOT PICKUP ARMS
+		
+		if(right.getRawButton(16)){
+			arms.setAngle(60);
+			Timer.delay(6);
+			arms.set(120);
+		}
+}
 	
 	
 	public void testPeriodic() {
@@ -458,7 +471,7 @@ public class Robot extends TimedRobot {
 //		System.out.println(stage2BottomStop.get());
 //		System.out.println("carriageTopStop");
 //		System.out.println(carriageTopStop.get());
-		System.out.println(carriageBottomStop.get());
+//		System.out.println(carriageBottomStop.get());
 //		System.out.println(carriageBottomStop.get());
 	}
 }
