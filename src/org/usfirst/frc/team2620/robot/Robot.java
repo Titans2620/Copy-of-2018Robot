@@ -47,7 +47,8 @@ public class Robot extends TimedRobot {
 	DigitalInput stage2TopStop = new DigitalInput(2);
 	DigitalInput stage2BottomStop = new DigitalInput(4);
 	DigitalInput carriageTopStop = new DigitalInput(1);
-	DigitalInput carriageBottomStop = new DigitalInput(0);	
+	DigitalInput carriageBottomStop = new DigitalInput(0);
+	
 	
 	Joystick left = new Joystick(0);
 	Joystick right = new Joystick(1);
@@ -66,13 +67,15 @@ public class Robot extends TimedRobot {
 	private boolean auton_atTarget = false;
 	private boolean auton_centered = false;
 	private boolean auton_atHeight = false;
-	private String auton_sideLastSeen; // Side relevent to the robot. L from gamedata would mean its on the right by default
+	private String auton_sideLastSeen; // Side relevant to the robot. L from gamedata would mean its on the right by default
 	
 	public void robotInit()
 	{
 		// TODO: ROBOT NEEDS ULTRASONIC AND CAMERA AND LIMIT SWITCHES
 		// CameraServer.getInstance().startAutomaticCapture();
-
+		
+		CameraServer.getInstance().startAutomaticCapture();
+		
 		gyro = new ADXRS450_Gyro();
 		gyro.calibrate();
 		
@@ -351,6 +354,7 @@ public class Robot extends TimedRobot {
 		driveRight.set(ControlMode.PercentOutput, right.getRawAxis(1));
 		driveLeft.set(ControlMode.PercentOutput, left.getRawAxis(1));
 		
+		
 		boolean lTrigger = left.getRawButton(1);
 		boolean lFaceB = left.getRawButton(2);
 		boolean lFaceL = left.getRawButton(3);
@@ -391,8 +395,8 @@ public class Robot extends TimedRobot {
 		
 		
 		if(left.getRawButton(11)){
-				RclimbLock.setAngle(45);
-				LclimbLock.setAngle(0);
+				RclimbLock.setAngle(0);
+				LclimbLock.setAngle(45);
 			}
 		
 		
@@ -418,7 +422,7 @@ public class Robot extends TimedRobot {
 		} else if(lPOV == 180 || lPOV == 285 || lPOV == 135) {
 			lift(stage2Speed * -1);
 		} else {
-			lift(0.0);
+			lift(0.07);
 		}
 
 		// Climb logic
@@ -432,18 +436,26 @@ public class Robot extends TimedRobot {
 		// }
 
 		// Carriage
-		if(rPOV == 180 || rPOV == 285 || rPOV == 135) {
-			carriage(carriageSpeed * -1);
-		} else if(rPOV == 0 || rPOV == 45 || rPOV == 315) {
+		if(rPOV == 0 || rPOV == 45 || rPOV == 315) {
 			carriage(carriageSpeed);
+		} else if(rPOV == 180 || rPOV == 285 || rPOV == 135) {
+			if(!stage2BottomStop.get()){
+				stage2Left.set(-1);
+				}
+			else{
+			carriage(carriageSpeed * -1);
+			}
+		if(carriageBottomStop.get()){
+			carriageMotor.set(0);
+		}
 		} else {
-			carriage(0.1);
+			carriage(0.07);
 		}
 	
 		// OTHER BOT PICKUP ARMS
 		
 		if(right.getRawButton(16)){
-			arms.setAngle(60);
+			arms.setAngle(40);
 			Timer.delay(6);
 			arms.set(120);
 		}
@@ -467,8 +479,8 @@ public class Robot extends TimedRobot {
 		
 //		System.out.println("stage2TopStop");
 //		System.out.println(stage2TopStop.get());
-//		System.out.println("stage2BottomStop");
-//		System.out.println(stage2BottomStop.get());
+		System.out.println(stage2TopStop.get());
+//		System.out.println(carriageTopStop.get());
 //		System.out.println("carriageTopStop");
 //		System.out.println(carriageTopStop.get());
 //		System.out.println(carriageBottomStop.get());
