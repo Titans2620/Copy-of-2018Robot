@@ -12,6 +12,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive.*;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
@@ -351,9 +353,24 @@ public class Robot extends TimedRobot {
 	public void  teleopPeriodic() 
 	{
 		
-		driveRight.set(ControlMode.PercentOutput, right.getRawAxis(1));
-		driveLeft.set(ControlMode.PercentOutput, left.getRawAxis(1));
 		
+		////////////////////////////////////////////////////////////////////
+		////////////////////////////////////////////////////////////////////
+		////////////////////////////////////////////////////////////////////
+		////////////////////////////////////////////////////////////////////
+		// Change true for tank and false for arcade ///////////////////////
+		boolean Jacob = true;
+		
+		//TODO Set up arcade drive drive with talons
+		if(Jacob == false) {
+			
+			
+		}
+		
+		if(Jacob == true) {
+			driveRight.set(ControlMode.PercentOutput, right.getRawAxis(1));
+			driveLeft.set(ControlMode.PercentOutput, left.getRawAxis(1));
+		}
 		
 		boolean lTrigger = left.getRawButton(1);
 		boolean lFaceB = left.getRawButton(2);
@@ -394,62 +411,108 @@ public class Robot extends TimedRobot {
 		//lock
 		
 		
-		if(left.getRawButton(11)){
+		if(Jacob == true) {
+			if(left.getRawButton(11)){
+					RclimbLock.setAngle(0);
+					LclimbLock.setAngle(45);
+				}
+		}
+		
+		if(Jacob == false) {
+			if(rPLTLeft) {
 				RclimbLock.setAngle(0);
 				LclimbLock.setAngle(45);
 			}
+		}
 		
 		
 		
 		//System.out.println(left.getRawAxis(3));
 		
 		// Pickup Logic
-		if(rTrigger) {
-			pickup(pickupSpeed);
-			
-		}
-		else if(lTrigger) {
-			pickup(pickupSpeed * -1);
-		} 
-		else {
-			// set to 0.1 for operation
+		if(Jacob == true) {
+			if(rTrigger) {
+				pickup(pickupSpeed);
+				
+			}
+			else if(lTrigger) {
+				pickup(pickupSpeed * -1);
+			} 
+			else {
+				// set to 0.1 for operation
 				pickup(0.1);
 			}
 
-		// Stage 2 Logic
-		if(lPOV == 0 || lPOV == 45 || lPOV == 315) {
-			lift(stage2Speed);
-		} else if(lPOV == 180 || lPOV == 285 || lPOV == 135) {
-			lift(stage2Speed * -1);
-		} else {
-			lift(0.07);
+		}
+		if(Jacob == false) {
+			if(rTrigger) {
+				pickup(pickupSpeed);
+			
+			}
+			else if(rFaceB) {
+				pickup(pickupSpeed * -1);
+			} 
+			else {
+				// set to 0.1 for operation
+				pickup(0.1);
+			}
 		}
 
-		// Climb logic
-		// if(lTrigger) 
-		// {
-		// 	climbLock.set(.65);
-		// }
-		// else 
-		// {
-		// 	climbLock.set(0);
-		// }
+		
+		
+		// Stage 2 Logic
+		if(Jacob == true) {
+			if(lPOV == 0 || lPOV == 45 || lPOV == 315) {
+				lift(stage2Speed);
+			} else if(lPOV == 180 || lPOV == 285 || lPOV == 135) {
+				lift(stage2Speed * -1);
+			} else {
+			lift(0.07);
+			}
+		}
 
 		// Carriage
-		if(rPOV == 0 || rPOV == 45 || rPOV == 315) {
-			carriage(carriageSpeed);
-		} else if(rPOV == 180 || rPOV == 285 || rPOV == 135) {
-			if(!stage2BottomStop.get()){
-				stage2Left.set(-1);
+		if(Jacob == false) {
+			if(rPOV == 0 || rPOV == 45 || rPOV == 315) {
+				if(!carriageTopStop.get()) {
+					carriage(carriageSpeed);
 				}
-			else{
-			carriage(carriageSpeed * -1);
+				else if(!stage2TopStop.get() && carriageTopStop.get()) {
+					stage2Left.set(1);
+				}
+			} 
+			else if(rPOV == 180 || rPOV == 285 || rPOV == 135) {	
+				if(!stage2BottomStop.get()){
+					stage2Left.set(-1);
+					}
+				else{
+					carriage(carriageSpeed * -1);
+				}
+				if(carriageBottomStop.get()){
+					carriageMotor.set(0);
+				}
+			} else {
+				carriage(0.07);
 			}
-		if(carriageBottomStop.get()){
-			carriageMotor.set(0);
 		}
-		} else {
-			carriage(0.07);
+		
+		if(Jacob == true) {
+			if(rPOV == 0 || rPOV == 45 || rPOV == 315) {
+				carriage(carriageSpeed);
+			} 
+			else if(rPOV == 180 || rPOV == 285 || rPOV == 135) {	
+				if(!stage2BottomStop.get()){
+					stage2Left.set(-1);
+					}
+				else{
+					carriage(carriageSpeed * -1);
+				}
+				if(carriageBottomStop.get()){
+					carriageMotor.set(0);
+				}
+			} else {
+				carriage(0.07);
+			}
 		}
 	
 		// OTHER BOT PICKUP ARMS
@@ -461,7 +524,7 @@ public class Robot extends TimedRobot {
 		}
 }
 	
-	
+
 	public void testPeriodic() {
 
 		/*boolean lTrigger = left.getRawButton(1);
