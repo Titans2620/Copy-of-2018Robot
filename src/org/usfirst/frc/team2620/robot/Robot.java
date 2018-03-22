@@ -481,30 +481,18 @@ public class Robot extends TimedRobot {
 		////////////////////////////////////////////
 		if(Jacob == true) {
 			if(rPOV == 0 || rPOV == 45 || rPOV == 315) {
-				if(!carriageTopStop.get()){
-				carriageMotor.set(carriageSpeed);
-				}
-				else{
-					carriageMotor.set(0);
-				}
+				carriage(carriageSpeed);
 			} else {			
 				if(rPOV == 180 || rPOV == 285 || rPOV == 135) {	
-					if(!stage2BottomStop.get()){
+					if(!stage2BottomStop.get()) {
 						stage2Left.set(-1);
 					}
-					if(stage2BottomStop.get()){
-						
-						if(!carriageBottomStop.get()){
-							carriageMotor.set(carriageSpeed * -1);
-						}
-				
-						if(carriageBottomStop.get()){
-							carriageMotor.set(0);
-							}
-						
+
+					if(stage2BottomStop.get()) {
+						carriage(carriageSpeed * -1);
 					}
 				} else {
-					carriageMotor.set(0.07);
+					carriage(0.07);
 				}
 				
 			}
