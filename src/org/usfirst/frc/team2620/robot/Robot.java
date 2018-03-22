@@ -51,6 +51,7 @@ public class Robot extends TimedRobot {
 	DigitalInput carriageTopStop = new DigitalInput(1);
 	DigitalInput carriageBottomStop = new DigitalInput(0);
 	
+	//DifferentialDrive drive;
 	
 	Joystick left = new Joystick(0);
 	Joystick right = new Joystick(1);
@@ -58,6 +59,9 @@ public class Robot extends TimedRobot {
 	double pickupSpeed = 1.0;
 	double stage2Speed = 1.0;
 	double carriageSpeed = 1.0;
+	private SendableChooser<Integer> driveChooser;
+	private boolean Locked;
+	private SendableChooser<Integer> enableSwitchlocks;
 	
 	
 	// Auton Vars
@@ -70,6 +74,18 @@ public class Robot extends TimedRobot {
 	private boolean auton_centered = false;
 	private boolean auton_atHeight = false;
 	private String auton_sideLastSeen; // Side relevant to the robot. L from gamedata would mean its on the right by default
+	private boolean autonLifted = false;
+	private Timer autonTimer;
+
+	private Timer carriageBumpTimer;
+	private boolean carriageBumpRun = false;
+	
+	DifferentialDrive diffDrive = new DifferentialDrive(driveLeft, driveRight);
+	
+	public Robot(){
+		
+		CameraServer.getInstance().startAutomaticCapture();
+	}
 	
 	public void robotInit()
 	{
@@ -77,6 +93,11 @@ public class Robot extends TimedRobot {
 		// CameraServer.getInstance().startAutomaticCapture();
 		
 		CameraServer.getInstance().startAutomaticCapture();
+		
+		carriageBumpTimer = new Timer();
+
+		arms.set(120);
+		autonTimer = new Timer();
 		
 		gyro = new ADXRS450_Gyro();
 		gyro.calibrate();
@@ -109,7 +130,29 @@ public class Robot extends TimedRobot {
 		autonChooser.addObject("TARGET SCALE -- ROBOT is LEFT", 4);
 		autonChooser.addObject("TARGET SCALE -- ROBOT is RIGHT", 5);
 		SmartDashboard.putData("Auton Mode", autonChooser);
-		boolean Locked = false;
+		
+
+		driveChooser = new SendableChooser<Integer>();
+		driveChooser.addDefault("Jacob", 1);
+		driveChooser.addObject("Not Jacob", 2);
+		SmartDashboard.putData("Driver", driveChooser);
+		
+		enableSwitchlocks = new SendableChooser<Integer>();
+		enableSwitchlocks.addDefault("Carriage Switch Locks Enabled", 1);
+		enableSwitchlocks.addObject("Carriage Switch Locks Disabled", 2);
+		SmartDashboard.putData("Carriage Switch Locks", enableSwitchlocks);
+		
+		Locked = false;
+		updateSmartDashboard();
+	}
+	
+	public void updateSmartDashboard() 
+	{
+		SmartDashboard.putBoolean("Carriage Top Stop", carriageTopStop.get());
+		SmartDashboard.putBoolean("Carriage Bottom Stop", carriageBottomStop.get());
+		SmartDashboard.putBoolean("Stage 2 Top Stop", stage2TopStop.get());
+		SmartDashboard.putBoolean("Stage 2 Bottom Stop", stage2BottomStop.get());
+		SmartDashboard.putBoolean("Climb Lock Enabled", Locked);
 	}
 
 	public void drive(double left, double right)
@@ -133,6 +176,7 @@ public class Robot extends TimedRobot {
 	
 	public void lift(double speed) 
 	{
+		
 		if(stage2TopStop.get() && speed > 0) {
 			speed = 0.0;
 		}
@@ -146,20 +190,42 @@ public class Robot extends TimedRobot {
 	}
 	
 	public void carriage(double speed) 
-	{
-		if(carriageTopStop.get() && speed > 0) {
-			speed = 0.0;
+	{	
+		if(enableSwitchlocks.getSelected() == 1) {
+			if(carriageTopStop.get() && speed > 0) {
+				speed = 0.0;
+			}
+			
+			if(carriageBottomStop.get() && speed < 0) {
+				speed = 0.0;
+				
+				if(!carriageBumpRun) {
+					carriageBumpTimer.reset();
+					carriageBumpTimer.start();
+					carriageBumpRun = true;
+				}
+			}
 		}
 		
-		if(carriageBottomStop.get() && speed < 0) {
-			speed = 0.0;
+		if(carriageBumpRun) {
+			if(carriageBumpTimer.get() < 0.15) {
+				speed = 0.4;
+			} else {
+				speed = 0.0;
+				carriageBumpRun = false;
+				carriageBumpTimer.stop();
+			}
 		}
-
+		
 		carriageMotor.set(speed);
 	}
 
 	public void autonomousInit()
 	{
+		autonLifted = false;
+		autonTimer.reset();
+		autonTimer.start();
+		
 		gyro.reset();
 		
 		auton_atTarget = false;
@@ -173,204 +239,110 @@ public class Robot extends TimedRobot {
 		driveRightEncoder.reset();
 	}
 
-	private void auton_driveStraightOnly()
-	{
-		double speed = autonDriveSpeed;
-
-		// Drive straight by adjusting the power to the motors by the % difference in rate in encoders
-		double leftRate = driveLeftEncoder.getRate();
-		double rightRate = driveRightEncoder.getRate();
-
-		double leftRateAdjustment = (leftRate - rightRate) / (leftRate + rightRate);
-		double rightRateAdjustment = (rightRate - leftRate) / (leftRate + rightRate);
-
-		drive(speed * leftRateAdjustment, speed * rightRateAdjustment);
-	}
-
-	private boolean auton_driveStraightDistance(int inches) 
-	{
-		// Drives straight until so many inches are reached by the left encoder
-		double leftDistance = driveLeftEncoder.getDistance();
-
-		if(leftDistance < inches) {
-			auton_driveStraightOnly();
-		} else {
-			drive(0.0, 0.0);
-			return true;
-		}
-		return false;
-	}
-
-	private void auton_placeInSwitch() 
-	{
-		boolean shouldPlaceLeft = (autonGameData.charAt(0) == 'L' && autonMode == 2);
-		boolean shouldPlaceRight = (autonGameData.charAt(0) == 'R' && autonMode == 3);
-
-		if(!shouldPlaceLeft && !shouldPlaceRight) {
-			// If our switch isnt on robots side, just drive past black line
-			auton_driveStraightDistance(autonStraightOnlyDistance);
-		} else {
-			if(Timer.getMatchTime() < 1.0) {
-				drive(autonDriveSpeed, autonDriveSpeed);
-			} else {
-	
-				if(shouldPlaceLeft || shouldPlaceRight) 
-				{
-					if(!auton_centered) {
-						// Turn left or right to center the robot on the target
-	
-						// Resolution is 640x480 I think?
-	
-						NetworkTableInstance instance = NetworkTableInstance.getDefault();
-			  			NetworkTable rootTable = instance.getTable("GRIP");
-						double centerX = rootTable.getSubTable("contours").getEntry("centerX").getDouble(640.0);
-						double centerPercent = centerX / 640.0;
-						double centerErrorPercent = 10.0;
-	
-						if(centerPercent > (50.0 - centerErrorPercent)) {
-							auton_sideLastSeen = "R";
-						} else if(centerPercent < (50.0 - centerErrorPercent)) {
-							auton_sideLastSeen = "L";
-						} else {
-							auton_sideLastSeen = "C";
-							auton_centered = true;
-						}
-	
-						double leftDirection = 0.0;
-						double rightDirection = 0.0;
-	
-						if(auton_sideLastSeen == "R") {
-							// Turn robot left to get to the center
-							leftDirection = -1.0;
-							rightDirection = 1.0;
-						} else if (auton_sideLastSeen == "L") {
-							// Turn robot right to get to the center
-							leftDirection = 1.0;
-							rightDirection = -1.0;
-						}
-	
-						drive(leftDirection * 0.2, rightDirection * -0.2);
-					} else if (!auton_atTarget) {
-						// Drive forward until we are very close to the target
-						if (frontDistance.getRangeInches() < 6) { 
-							// Within 6 inches of something
-							auton_atTarget = true;
-							drive(0.0, 0.0);
-						} else {
-							auton_driveStraightOnly();
-						}
-					} else {
-						// Spit out the crate
-						pickup(pickupSpeed * -1);
-					}
-				} else {
-					auton_driveStraightOnly();
-				}
-			}
-		}
-	}
-
-	private void auton_placeInScale()
-	{		
-		boolean shouldPlaceLeft = (autonGameData.charAt(1) == 'R' && autonMode == 4);
-		boolean shouldPlaceRight = (autonGameData.charAt(1) == 'L' && autonMode == 5);
-		
-		if(!shouldPlaceLeft && !shouldPlaceRight) {
-			// If our scale isnt on robots side, just drive past black line
-			auton_driveStraightDistance(autonStraightOnlyDistance);
-		} else {
-			// Scale is scoreable from our position
-
-			// TODO: REMOVE THE TWO HARD BOOL SETS BELOW
-			auton_centered = true; // Skip this step
-			auton_atHeight = true; // Skip this step
-			
-			if(!auton_centered) {
-				// Drive forward directly next too scale
-				auton_centered = auton_driveStraightDistance(10 * 12); // Drives forward 10 feet
-			} else if (!auton_atHeight) {
-				// Move to required height to place on scale
-	
-				lift(stage2Speed);
-				carriage(carriageSpeed);
-	
-				if(carriageTopStop.get() && stage2TopStop.get()) {
-					auton_atHeight = true;
-					gyro.reset();
-				}
-			} else if(!auton_atTarget) {
-				// Turn 90 degrees to face target
-				
-				System.out.println(gyro.getAngle());
-	
-				if(shouldPlaceLeft) {
-					// Turn Right 90 degrees
-					drive(autonDriveSpeed, autonDriveSpeed * -1.0);
-					if(gyro.getAngle() > 88) {
-						drive(0.0, 0.0);
-						auton_atTarget = true;
-					}
-				} else if(shouldPlaceRight) {
-					// Turn Left 90 degrees
-					drive(autonDriveSpeed * -1.0, autonDriveSpeed);
-					if(gyro.getAngle() < -88) {
-						drive(0.0, 0.0);
-						auton_atTarget = true;
-					}
-				}
-			} else {
-				// Spit out crate
-				pickup(pickupSpeed * -1);
-			}
-		}
-	}
-
 	public void autonomousPeriodic()
 	{
-		switch(autonMode) {
-			case 2: // Switch & Robot is on Left
-				auton_sideLastSeen = "R";
-			case 3: // Switch & Robot is on Right
-				auton_sideLastSeen = "L";
-				auton_placeInSwitch();
-				break;
-			case 4: // Scale & Robot is on Left
-				auton_sideLastSeen = "R";
-			case 5: // Scale & Robot is on Right
-				auton_sideLastSeen = "L";
-				auton_placeInScale();
-				break;
-			default:
-				auton_driveStraightDistance(autonStraightOnlyDistance);
-				break;
+		updateSmartDashboard();
+		double driveForwardTime = 1.5;
+		
+		autonLifted = true;
+		if(!autonLifted) {
+			carriage(0.4);
+			Timer.delay(0.3);
+			carriage(0.0);
+			autonLifted = true;
+		} else {
+			switch(autonMode) {
+				case 1:
+					// System.out.println(autonTimer.get());
+					if(autonTimer.get() >= driveForwardTime) {
+						// 2 - Stop driving
+						drive(0.0, 0.0);
+					} else {
+						// 1 - Start
+						drive(0.7, 0.7);
+					}
+					break;
+				case 2: // Switch & Robot is on Left
+				case 3: // Switch & Robot is on Right
+					double speed = 0.4;
+					double time = 2.5;
+					
+					if (autonMode == 2 && autonGameData.charAt(0) == 'L') {
+						speed = 0.65;
+						time = 1.7;
+					}
+					
+					if (autonMode == 3 && autonGameData.charAt(0) == 'R') {
+						speed = 0.65;
+						time = 1.7;
+					}
+					
+					if(autonTimer.get() >= time) {
+						// 2 - Stop Carriage Moving
+						drive(0.0, 0.0);
+					} else {
+						// 1 - Start
+						drive(speed * 0.93, speed);
+					}
+					break;
+				case 4: // Scale & Robot is on Left
+					auton_sideLastSeen = "R";
+					break;
+				case 5: // Scale & Robot is on Right
+					auton_sideLastSeen = "L";
+					// auton_placeInScale();
+					break;
+				default:
+					// auton_driveStraightDistance(autonStraightOnlyDistance);
+					break;
+			}
 		}
 	}
 
 	public void teleopInit() {
+		Locked = false;
 		gyro.reset();
 	}
 
 	public void  teleopPeriodic() 
-	{
+	{		
+		updateSmartDashboard();
 		
+		if(Locked == false){
+		RclimbLock.setAngle(180);
+		LclimbLock.setAngle(180);
+		}
 		
+
 		////////////////////////////////////////////////////////////////////
 		////////////////////////////////////////////////////////////////////
 		////////////////////////////////////////////////////////////////////
 		////////////////////////////////////////////////////////////////////
 		// Change true for tank and false for arcade ///////////////////////
-		boolean Jacob = true;
+		boolean Jacob = driveChooser.getSelected() == 1;
 		
-		//TODO Set up arcade drive drive with talons
+		
 		if(Jacob == false) {
-			
-			
+			if(stage2BottomStop.get()){
+			diffDrive.arcadeDrive(right.getRawAxis(0)  * -1, right.getRawAxis(1));
+			}
+			else{
+				diffDrive.arcadeDrive(right.getRawAxis(0) * .76  * -1, right.getRawAxis(1) * .76);
+			}
 		}
+		
 		
 		if(Jacob == true) {
+			if(stage2BottomStop.get()){
 			driveRight.set(ControlMode.PercentOutput, right.getRawAxis(1));
 			driveLeft.set(ControlMode.PercentOutput, left.getRawAxis(1));
+			}
+			else{
+				driveRight.set(ControlMode.PercentOutput, right.getRawAxis(1) * .76);
+				driveLeft.set(ControlMode.PercentOutput, left.getRawAxis(1)* .76);
+			}
 		}
+			
 		
 		boolean lTrigger = left.getRawButton(1);
 		boolean lFaceB = left.getRawButton(2);
@@ -394,7 +366,7 @@ public class Robot extends TimedRobot {
 		boolean rFaceB = right.getRawButton(2);
 		boolean rFaceL = right.getRawButton(3);
 		boolean rFaceR = right.getRawButton(4);
-		boolean rPLTLeft = right.getRawButton(11);
+		boolean rPLTLeft = right.getRawButton(5);
 		boolean rPLTCenter = right.getRawButton(12);
 		boolean rPLTRight = right.getRawButton(13);
 		boolean rPLBLeft = right.getRawButton(16);
@@ -402,7 +374,7 @@ public class Robot extends TimedRobot {
 		boolean rPLBRight = right.getRawButton(14);
 		boolean rPRTLeft = right.getRawButton(7);
 		boolean rPRTCenter = right.getRawButton(6);
-		boolean rPRTRight = right.getRawButton(5);
+		//boolean rPRTRight = right.getRawButton(5);
 		boolean rPRBLeft = right.getRawButton(8);
 		boolean rPRBCenter = right.getRawButton(9);
 		boolean rPRBRight = right.getRawButton(10);
@@ -412,14 +384,16 @@ public class Robot extends TimedRobot {
 		
 		
 		if(Jacob == true) {
-			if(left.getRawButton(11)){
+			if(left.getRawButton(3)){
 					RclimbLock.setAngle(0);
 					LclimbLock.setAngle(45);
+					Locked = true;
 				}
 		}
 		
 		if(Jacob == false) {
 			if(rPLTLeft) {
+				Locked = true;
 				RclimbLock.setAngle(0);
 				LclimbLock.setAngle(45);
 			}
@@ -437,7 +411,7 @@ public class Robot extends TimedRobot {
 			}
 			else if(lTrigger) {
 				pickup(pickupSpeed * -1);
-			} 
+			}
 			else {
 				// set to 0.1 for operation
 				pickup(0.1);
@@ -451,7 +425,7 @@ public class Robot extends TimedRobot {
 			}
 			else if(rFaceB) {
 				pickup(pickupSpeed * -1);
-			} 
+			}
 			else {
 				// set to 0.1 for operation
 				pickup(0.1);
@@ -464,9 +438,11 @@ public class Robot extends TimedRobot {
 		if(Jacob == true) {
 			if(lPOV == 0 || lPOV == 45 || lPOV == 315) {
 				lift(stage2Speed);
-			} else if(lPOV == 180 || lPOV == 285 || lPOV == 135) {
+			}
+			else if(lPOV == 180 || lPOV == 285 || lPOV == 135) {
 				lift(stage2Speed * -1);
-			} else {
+			}
+			else {
 			lift(0.07);
 			}
 		}
@@ -474,44 +450,63 @@ public class Robot extends TimedRobot {
 		// Carriage
 		if(Jacob == false) {
 			if(rPOV == 0 || rPOV == 45 || rPOV == 315) {
-				if(!carriageTopStop.get()) {
-					carriage(carriageSpeed);
+				if(!stage2TopStop.get()){
+					stage2Left.set(1.0);
 				}
-				else if(!stage2TopStop.get() && carriageTopStop.get()) {
-					stage2Left.set(1);
+				else{
+					stage2Left.set(0.0);
 				}
-			} 
-			else if(rPOV == 180 || rPOV == 285 || rPOV == 135) {	
+				if(!carriageTopStop.get()){
+					carriage(1.0);
+				}
+				else{
+					carriage(0.0);
+				}
+			}
+			else{
+				stage2Left.set(0);
+				carriage(0.1);
+			}
+			if(rPOV == 180 || rPOV == 285 || rPOV == 135){
 				if(!stage2BottomStop.get()){
 					stage2Left.set(-1);
-					}
+				}
 				else{
-					carriage(carriageSpeed * -1);
+					stage2Left.set(0);
+					carriage(-1);
 				}
-				if(carriageBottomStop.get()){
-					carriageMotor.set(0);
-				}
-			} else {
-				carriage(0.07);
 			}
 		}
 		
+		////////////////////////////////////////////
 		if(Jacob == true) {
 			if(rPOV == 0 || rPOV == 45 || rPOV == 315) {
-				carriage(carriageSpeed);
-			} 
-			else if(rPOV == 180 || rPOV == 285 || rPOV == 135) {	
-				if(!stage2BottomStop.get()){
-					stage2Left.set(-1);
-					}
-				else{
-					carriage(carriageSpeed * -1);
+				if(!carriageTopStop.get()){
+				carriageMotor.set(carriageSpeed);
 				}
-				if(carriageBottomStop.get()){
+				else{
 					carriageMotor.set(0);
 				}
-			} else {
-				carriage(0.07);
+			} else {			
+				if(rPOV == 180 || rPOV == 285 || rPOV == 135) {	
+					if(!stage2BottomStop.get()){
+						stage2Left.set(-1);
+					}
+					if(stage2BottomStop.get()){
+						
+						if(!carriageBottomStop.get()){
+							carriageMotor.set(carriageSpeed * -1);
+						}
+				
+						if(carriageBottomStop.get()){
+							carriageMotor.set(0);
+							}
+						
+					}
+				} else {
+					carriageMotor.set(0.07);
+				}
+				
 			}
 		}
 	
@@ -522,11 +517,20 @@ public class Robot extends TimedRobot {
 			Timer.delay(6);
 			arms.set(120);
 		}
-}
+	}
+
+		
 	
 
 	public void testPeriodic() {
-
+		boolean lTrigger = left.getRawButton(1);
+		
+		if(lTrigger) {
+			carriage(0.4);
+			Timer.delay(0.3);
+			carriage(0.0);
+		}
+		
 		/*boolean lTrigger = left.getRawButton(1);
 		boolean rTrigger = right.getRawButton(1);
 		
@@ -542,7 +546,7 @@ public class Robot extends TimedRobot {
 		
 //		System.out.println("stage2TopStop");
 //		System.out.println(stage2TopStop.get());
-		System.out.println(stage2TopStop.get());
+//		System.out.println(stage2TopStop.get());
 //		System.out.println(carriageTopStop.get());
 //		System.out.println("carriageTopStop");
 //		System.out.println(carriageTopStop.get());
