@@ -80,17 +80,15 @@ public class Robot extends TimedRobot {
 	private Timer carriageBumpTimer;
 	private boolean carriageBumpRun = false;
 	
-	
+	DifferentialDrive diffDrive = new DifferentialDrive(driveLeft, driveRight);
 	
 	public Robot(){
 		
 		CameraServer.getInstance().startAutomaticCapture();
-		
 	}
 	
 	public void robotInit()
 	{
-		
 		// TODO: ROBOT NEEDS ULTRASONIC AND CAMERA AND LIMIT SWITCHES
 		// CameraServer.getInstance().startAutomaticCapture();
 		
@@ -304,13 +302,10 @@ public class Robot extends TimedRobot {
 	public void teleopInit() {
 		Locked = false;
 		gyro.reset();
-		
 	}
 
 	public void  teleopPeriodic() 
-	{	
-		DifferentialDrive diffDrive = new DifferentialDrive(driveLeft, driveRight);
-		
+	{		
 		updateSmartDashboard();
 		
 		if(Locked == false){
@@ -510,5 +505,40 @@ public class Robot extends TimedRobot {
 			Timer.delay(6);
 			arms.set(120);
 		}
+	}
+
+		
+	
+
+	public void testPeriodic() {
+		boolean lTrigger = left.getRawButton(1);
+		
+		if(lTrigger) {
+			carriage(0.4);
+			Timer.delay(0.3);
+			carriage(0.0);
+		}
+		
+		/*boolean lTrigger = left.getRawButton(1);
+		boolean rTrigger = right.getRawButton(1);
+		
+		if(lTrigger) {
+			carriage(1.0);
+		} else {
+			if(rTrigger) {
+				carriage(-1.0);
+			} else {
+				carriage(0.1);
+			}
+		}*/
+		
+//		System.out.println("stage2TopStop");
+//		System.out.println(stage2TopStop.get());
+//		System.out.println(stage2TopStop.get());
+//		System.out.println(carriageTopStop.get());
+//		System.out.println("carriageTopStop");
+//		System.out.println(carriageTopStop.get());
+//		System.out.println(carriageBottomStop.get());
+//		System.out.println(carriageBottomStop.get());
 	}
 }
