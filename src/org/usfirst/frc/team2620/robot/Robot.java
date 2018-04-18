@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Servo;
+import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Ultrasonic;
 import edu.wpi.first.networktables.NetworkTable;
@@ -19,6 +20,7 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
+import edu.wpi.first.wpilibj.PWMSpeedController;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.CameraServer;
 
@@ -33,8 +35,13 @@ public class Robot extends TimedRobot {
 	WPI_TalonSRX stage2Right = new WPI_TalonSRX(2);
 	WPI_TalonSRX stage2Left = new WPI_TalonSRX(6);
 	WPI_TalonSRX carriageMotor = new WPI_TalonSRX(7);
-	WPI_TalonSRX pickupRight = new WPI_TalonSRX(3);
-	WPI_TalonSRX pickupLeft = new WPI_TalonSRX(4);
+	//WPI_TalonSRX pickupRight = new WPI_TalonSRX(3);
+	//WPI_TalonSRX pickupLeft = new WPI_TalonSRX(4);
+	WPI_TalonSRX tiltMotor = new WPI_TalonSRX(8);
+	
+	//fix b4 comp
+	PWMSpeedController pickupLeft = new Spark(3);
+	PWMSpeedController pickupRight = new Spark(4);
 	
 	Servo RclimbLock = new Servo(0);
 	Servo LclimbLock = new Servo(1);
@@ -108,8 +115,8 @@ public class Robot extends TimedRobot {
 		pickupLeft.setInverted(true);
 		stage2Left.setInverted(true);
 
-		pickupLeft.setNeutralMode(NeutralMode.Brake);
-		pickupRight.setNeutralMode(NeutralMode.Brake);
+		/*pickupLeft.setNeutralMode(NeutralMode.Brake);
+		pickupRight.setNeutralMode(NeutralMode.Brake);*/
 		
 		// Setup Encoders, https://wpilib.screenstepslive.com/s/currentCS/m/java/l/599717-encoders-measuring-rotation-of-a-wheel-or-other-shaft
 		driveLeftEncoder.setMaxPeriod(.1);
@@ -136,7 +143,7 @@ public class Robot extends TimedRobot {
 
 		driveChooser = new SendableChooser<Integer>();
 		driveChooser.addDefault("Jacob", 1);
-		driveChooser.addObject("Not Jacob", 2);
+		driveChooser.addObject("Chloe", 2);
 		SmartDashboard.putData("Driver", driveChooser);
 		
 		enableSwitchlocks = new SendableChooser<Integer>();
@@ -416,7 +423,7 @@ public class Robot extends TimedRobot {
 				
 
 				// set to 0.1 for operation
-				pickup(0.2);
+				pickup(0.15);
 			}
 
 		}
@@ -430,14 +437,14 @@ public class Robot extends TimedRobot {
 			}
 			else {
 				// set to 0.1 for operation
-				pickup(0.2);
+				pickup(0.15);
 			}
 		}
 
 		
 		
 		// Stage 2 Logic
-		if(Jacob == true) {
+		/*if(Jacob == true) {
 			if(lPOV == 0 || lPOV == 45 || lPOV == 315) {
 				lift(stage2Speed);
 			}
@@ -447,41 +454,40 @@ public class Robot extends TimedRobot {
 			else {
 			lift(0.07);
 			}
-		}
+		}*/
 
 		// Carriage
-		if(Jacob == false) {
-			if(rPOV == 0 || rPOV == 45 || rPOV == 315) {
-				if(!stage2TopStop.get()){
-					stage2Left.set(1.0);
-				}
-				else{
-					stage2Left.set(0.0);
-				}
-				if(!carriageTopStop.get()){
-					carriage(1.0);
-				}
-				else{
-					carriage(0.0);
-				}
+		if(rPOV == 0 || rPOV == 45 || rPOV == 315) {
+			if(!stage2TopStop.get()){
+				stage2Left.set(1.0);
+			}
+			else{
+				stage2Left.set(0.0);
+			}
+			if(!carriageTopStop.get()){
+				carriage(1.0);
+			}
+			else{
+				carriage(0.0);
+			}
+		}
+		else{
+			stage2Left.set(0);
+			carriage(0.1);
+		}
+		if(rPOV == 180 || rPOV == 285 || rPOV == 135){
+			if(!stage2BottomStop.get()){
+				stage2Left.set(-1);
 			}
 			else{
 				stage2Left.set(0);
-				carriage(0.1);
-			}
-			if(rPOV == 180 || rPOV == 285 || rPOV == 135){
-				if(!stage2BottomStop.get()){
-					stage2Left.set(-1);
-				}
-				else{
-					stage2Left.set(0);
-					carriage(-1);
-				}
+				carriage(-1);
 			}
 		}
 		
+		
 		////////////////////////////////////////////
-		if(Jacob == true) {
+/*		if(Jacob == true) {
 			if(rPOV == 0 || rPOV == 45 || rPOV == 315) {
 				carriage(carriageSpeed);
 			} else {			
@@ -498,7 +504,7 @@ public class Robot extends TimedRobot {
 				}
 				
 			}
-		}
+		}*/
 	
 		// OTHER BOT PICKUP ARMS
 		
@@ -506,6 +512,19 @@ public class Robot extends TimedRobot {
 			arms.setAngle(40);
 			Timer.delay(6);
 			arms.set(120);
+		}
+		
+		//ARM TILT LOGIC
+		if(rFaceR){
+			tiltMotor.set(.75);
+		}
+		else{
+			if(rFaceL){
+				tiltMotor.set(-.75);
+			}
+			else{
+				tiltMotor.set(0);
+			}
 		}
 	}
 
