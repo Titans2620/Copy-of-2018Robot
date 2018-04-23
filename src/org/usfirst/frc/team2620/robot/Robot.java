@@ -50,7 +50,7 @@ public class Robot extends TimedRobot {
 	Encoder driveLeftEncoder = new Encoder(3, 5, false, Encoder.EncodingType.k4X);
 	Encoder driveRightEncoder = new Encoder(6, 7, false, Encoder.EncodingType.k4X);	
 	
-	
+	double encoderD = 0;
 	
 	Ultrasonic frontDistance = new Ultrasonic(8, 9);
 	ADXRS450_Gyro gyro;
@@ -162,6 +162,7 @@ public class Robot extends TimedRobot {
 		SmartDashboard.putBoolean("Stage 2 Top Stop", stage2TopStop.get());
 		SmartDashboard.putBoolean("Stage 2 Bottom Stop", stage2BottomStop.get());
 		SmartDashboard.putBoolean("Climb Lock Enabled", Locked);
+		SmartDashboard.putNumber("Rate", encoderD);
 	}
 
 	public void drive(double left, double right)
@@ -320,6 +321,7 @@ public class Robot extends TimedRobot {
 		LclimbLock.setAngle(180);
 		}
 		
+		encoderD = driveRightEncoder.getRaw();
 
 		////////////////////////////////////////////////////////////////////
 		////////////////////////////////////////////////////////////////////
