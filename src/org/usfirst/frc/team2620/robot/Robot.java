@@ -230,6 +230,55 @@ public class Robot extends TimedRobot {
 		
 		carriageMotor.set(speed);
 	}
+	
+	public void encMove(double rSpeed, int rDistance, double lSpeed, int lDistance, boolean forward) {
+		
+		double newRSpeed = rSpeed;
+		double newLSpeed = lSpeed;
+		int difference;
+		
+		while(forward == true){
+			difference = driveRightEncoder.getRaw() - driveLeftEncoder.getRaw();
+			if(difference > 10){
+				newRSpeed = (newRSpeed - .1);
+				driveRight.set(newRSpeed);
+			}
+			else{
+				driveRight.set(rSpeed);
+				newRSpeed = rSpeed;
+			}
+			if(difference < -10){
+				newLSpeed = (newLSpeed - .1);
+				driveLeft.set(newLSpeed);
+			}
+			else{
+				driveLeft.set(lSpeed);
+				newLSpeed = lSpeed;
+			}
+	
+		
+			if(driveRightEncoder.getRaw() > rDistance){
+				driveRight.set(rSpeed);
+		
+			}
+		
+		else{driveRight.set(0);
+			break;
+		}
+		if(driveLeftEncoder.getRaw() > lDistance){
+			driveLeft.set(lSpeed);
+		}
+		else{driveLeft.set(0);
+			break;
+		}
+	}
+		while(forward == false) {
+			if(driveRightEncoder.getRaw() > rDistance + 10) {
+				driveRight.set(.1);
+				
+			}
+		}
+	}
 
 	public void autonomousInit()
 	{	
@@ -258,7 +307,7 @@ public class Robot extends TimedRobot {
 		
 		updateSmartDashboard();
 		double driveForwardTime = 1.5;
-		int difference = 0;
+		
 		
 		autonLifted = true;
 		if(!autonLifted) {
@@ -286,45 +335,8 @@ public class Robot extends TimedRobot {
 					
 					if (autonMode == 2 && autonGameData.charAt(0) == 'L') { //if Robot and switch are on Left
 						
-						int distance = -6000;
-						double speed = -.5;
-						boolean Forward = true;
-						double newSpeed = speed;
-						while(Forward == true){
-							difference = driveRightEncoder.getRaw() - driveLeftEncoder.getRaw();
-							if(difference > 1){
-								newSpeed = (newSpeed - .1);
-								driveRight.set(newSpeed);
-							}
-							else{
-								driveRight.set(speed);
-								newSpeed = speed;
-							}
-							if(difference < -1){
-								newSpeed = (newSpeed - .1);
-								driveLeft.set(newSpeed);
-							}
-							else{
-								driveLeft.set(speed);
-								newSpeed = speed;
-							}
-					
 						
-							if(driveRightEncoder.getRaw() > distance){
-								driveRight.set(speed);
 						
-							}
-						
-						else{driveRight.set(0);
-							Forward = false;
-						}
-						if(driveLeftEncoder.getRaw() > distance){
-							driveLeft.set(speed);
-						}
-						else{driveLeft.set(0);
-							Forward = false;
-						}
-					}
 					}
 					if (autonMode == 2 && autonGameData.charAt(0) == 'R'){//if robot left and switch is on Right
 							
