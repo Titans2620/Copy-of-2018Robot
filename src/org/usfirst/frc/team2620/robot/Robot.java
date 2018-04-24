@@ -53,7 +53,7 @@ public class Robot extends TimedRobot {
 	double encoderD = 0;
 	
 	Ultrasonic frontDistance = new Ultrasonic(8, 9);
-	ADXRS450_Gyro gyro;
+	//ADXRS450_Gyro gyro;
 	
 	DigitalInput stage2TopStop = new DigitalInput(2);
 	DigitalInput stage2BottomStop = new DigitalInput(4);
@@ -108,8 +108,8 @@ public class Robot extends TimedRobot {
 		arms.set(120);
 		autonTimer = new Timer();
 		
-		gyro = new ADXRS450_Gyro();
-		gyro.calibrate();
+		//gyro = new ADXRS450_Gyro();
+		//gyro.calibrate();
 		
 		driveRight.setInverted(true);
 		pickupLeft.setInverted(true);
@@ -122,7 +122,7 @@ public class Robot extends TimedRobot {
 		driveLeftEncoder.setMaxPeriod(.1);
 		driveLeftEncoder.setMinRate(10);
 		driveLeftEncoder.setDistancePerPulse(6.0 / 360.0); // Distance = circumference * pulses / pulses_per_revolution, circumference = 6, pulsers_per_revolution = 360?
-		driveLeftEncoder.setReverseDirection(false);
+		driveLeftEncoder.setReverseDirection(true);
 		driveLeftEncoder.setSamplesToAverage(7);
 
 		driveRightEncoder.setMaxPeriod(.1);
@@ -162,7 +162,8 @@ public class Robot extends TimedRobot {
 		SmartDashboard.putBoolean("Stage 2 Top Stop", stage2TopStop.get());
 		SmartDashboard.putBoolean("Stage 2 Bottom Stop", stage2BottomStop.get());
 		SmartDashboard.putBoolean("Climb Lock Enabled", Locked);
-		SmartDashboard.putNumber("Rate", encoderD);
+		SmartDashboard.putNumber("Right", driveRightEncoder.getRaw());
+		SmartDashboard.putNumber("Left", driveLeftEncoder.getRaw());
 	}
 
 	public void drive(double left, double right)
@@ -231,12 +232,13 @@ public class Robot extends TimedRobot {
 	}
 
 	public void autonomousInit()
-	{
+	{	
+		
 		autonLifted = false;
 		autonTimer.reset();
 		autonTimer.start();
 		
-		gyro.reset();
+		//gyro.reset();
 		
 		auton_atTarget = false;
 		auton_centered = false;
@@ -247,12 +249,16 @@ public class Robot extends TimedRobot {
 		frontDistance.setAutomaticMode(true);
 		driveLeftEncoder.reset();
 		driveRightEncoder.reset();
+		
+		
 	}
 
 	public void autonomousPeriodic()
-	{
+	{	
+		
 		updateSmartDashboard();
 		double driveForwardTime = 1.5;
+		int difference = 0;
 		
 		autonLifted = true;
 		if(!autonLifted) {
@@ -273,27 +279,73 @@ public class Robot extends TimedRobot {
 					}
 					break;
 				case 2: // Switch & Robot is on Left
+					
 				case 3: // Switch & Robot is on Right
-					double speed = 0.4;
-					double time = 2.5;
+					/*double speed = 0.4;
+					double time = 2.5;*/
 					
-					if (autonMode == 2 && autonGameData.charAt(0) == 'L') {
-						speed = 0.65;
-						time = 1.7;
+					if (autonMode == 2 && autonGameData.charAt(0) == 'L') { //if Robot and switch are on Left
+						
+						int distance = -6000;
+						double speed = -.5;
+						boolean Forward = true;
+						double newSpeed = speed;
+						while(Forward == true){
+							difference = driveRightEncoder.getRaw() - driveLeftEncoder.getRaw();
+							if(difference > 1){
+								newSpeed = (newSpeed - .1);
+								driveRight.set(newSpeed);
+							}
+							else{
+								driveRight.set(speed);
+								newSpeed = speed;
+							}
+							if(difference < -1){
+								newSpeed = (newSpeed - .1);
+								driveLeft.set(newSpeed);
+							}
+							else{
+								driveLeft.set(speed);
+								newSpeed = speed;
+							}
+					
+						
+							if(driveRightEncoder.getRaw() > distance){
+								driveRight.set(speed);
+						
+							}
+						
+						else{driveRight.set(0);
+							Forward = false;
+						}
+						if(driveLeftEncoder.getRaw() > distance){
+							driveLeft.set(speed);
+						}
+						else{driveLeft.set(0);
+							Forward = false;
+						}
+					}
+					}
+					if (autonMode == 2 && autonGameData.charAt(0) == 'R'){//if robot left and switch is on Right
+							
 					}
 					
-					if (autonMode == 3 && autonGameData.charAt(0) == 'R') {
-						speed = 0.65;
-						time = 1.7;
+					if (autonMode == 3 && autonGameData.charAt(0) == 'R') { // if Robot and switch are on Right
+						/*speed = 0.65;
+						time = 1.7;*/
+						driveRight.set(1);Timer.delay(0.1);driveLeft.set(0);
+					}
+					if(autonMode == 3 && autonGameData.charAt(0) == 'L'){//if robot right and switch are Left
+						driveRight.set(-1);Timer.delay(0.1);driveLeft.set(0);
 					}
 					
-					if(autonTimer.get() >= time) {
+					/*if(autonTimer.get() >= time) {
 						// 2 - Stop Carriage Moving
 						drive(0.0, 0.0);
 					} else {
 						// 1 - Start
 						drive(speed * 0.93, speed);
-					}
+					}*/
 					break;
 				case 4: // Scale & Robot is on Left
 					auton_sideLastSeen = "R";
@@ -312,6 +364,8 @@ public class Robot extends TimedRobot {
 	public void teleopInit() {
 		Locked = false;
 		//gyro.reset();
+		driveLeftEncoder.reset();
+		driveRightEncoder.reset();
 	}
 	public void teleopPeriodic(){
 		updateSmartDashboard();
@@ -321,7 +375,7 @@ public class Robot extends TimedRobot {
 		LclimbLock.setAngle(180);
 		}
 		
-		encoderD = driveRightEncoder.getRaw();
+		
 
 		////////////////////////////////////////////////////////////////////
 		////////////////////////////////////////////////////////////////////
