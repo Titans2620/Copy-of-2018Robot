@@ -16,6 +16,8 @@ import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive.*;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
+import java.math.*;
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
@@ -231,13 +233,20 @@ public class Robot extends TimedRobot {
 		carriageMotor.set(speed);
 	}
 	
-	public void encMove(double rSpeed, int rDistance, double lSpeed, int lDistance, boolean forward) {
-		
+	public void encMove(double lSpeed, int lDistance, double rSpeed, int rDistance) {
+		boolean straight;
+		if(rDistance == lDistance){
+			straight = true;
+		}
+		else{
+			straight = false;
+		}
 		double newRSpeed = rSpeed;
 		double newLSpeed = lSpeed;
 		int difference;
-		
-		while(forward == true){
+		boolean rightStop = false;
+		boolean leftStop = false;
+		while(straight == true){
 			difference = driveRightEncoder.getRaw() - driveLeftEncoder.getRaw();
 			if(difference > 10){
 				newRSpeed = (newRSpeed - .1);
@@ -255,34 +264,89 @@ public class Robot extends TimedRobot {
 				driveLeft.set(lSpeed);
 				newLSpeed = lSpeed;
 			}
-	
-		
 			if(driveRightEncoder.getRaw() > rDistance){
-				driveRight.set(rSpeed);
-		
+				rightStop = true;
+				driveRight.set(0);
 			}
-		
-		else{driveRight.set(0);
-			break;
-		}
-		if(driveLeftEncoder.getRaw() > lDistance){
-			driveLeft.set(lSpeed);
-		}
-		else{driveLeft.set(0);
-			break;
-		}
-	}
-		while(forward == false) {
-			if(driveRightEncoder.getRaw() > rDistance + 10) {
-				driveRight.set(.1);
-				
+			if(driveLeftEncoder.getRaw() > lDistance){
+				leftStop = true;
+				driveLeft.set(0);
 			}
-		}
+			if(leftStop && rightStop){
+				straight = false;
+			}
+		}	
 	}
-
+/*		boolean rightDone = false;
+		boolean leftDone = false;
+		
+			while(straight == false && (leftDone == false || rightDone == false)) {
+				if(rDistance > 0){ 
+					if(driveRightEncoder.getRaw() < rDistance) {
+						driveRight.set(rSpeed);
+					}
+					else if(driveRightEncoder.getRaw() > rDistance){
+						driveRight.set(rSpeed * -1);
+					}
+					else{
+						driveRight.set(0);
+						newRSpeed = rSpeed;
+						rightDone = true;
+					}
+				}
+					else{
+						if(driveRightEncoder.getRaw() > rDistance) {
+							driveRight.set(rSpeed);
+						}
+						else if(driveRightEncoder.getRaw() < rDistance){
+							driveRight.set(rSpeed * -1);
+						}
+						else{
+							driveRight.set(0);
+							newRSpeed = rSpeed;
+							rightDone = true;
+					}
+				}
+			
+				if(lDistance > 0){
+					if(driveLeftEncoder.getRaw() < lDistance) {
+						newLSpeed = (newLSpeed + .1);
+						driveLeft.set(newLSpeed);
+					}
+					else if(driveLeftEncoder.getRaw() > lDistance){
+						newLSpeed = (newLSpeed - .1);
+						driveLeft.set(newLSpeed);
+					}
+					else{
+						driveLeft.set(0);
+						newLSpeed = lSpeed;
+						leftDone = true;				
+					}
+				}
+				else{
+					if(driveLeftEncoder.getRaw() > lDistance) {
+						newLSpeed = (newLSpeed + .1);
+						driveLeft.set(newLSpeed);
+					}
+					else if(driveLeftEncoder.getRaw() < lDistance){
+						newLSpeed = (newLSpeed - .1);
+						driveLeft.set(newLSpeed);
+					}
+					else{
+						driveLeft.set(0);
+						newLSpeed = lSpeed;
+						leftDone = true;				
+					}
+				}
+		}
+			driveLeftEncoder.reset();
+			driveRightEncoder.reset();
+	}*/
+////////////////////////////////////////////////////////////////////////////
 	public void autonomousInit()
 	{	
-		
+		driveRight.setInverted(false);
+		driveLeft.setInverted(true);
 		autonLifted = false;
 		autonTimer.reset();
 		autonTimer.start();
@@ -299,7 +363,7 @@ public class Robot extends TimedRobot {
 		driveLeftEncoder.reset();
 		driveRightEncoder.reset();
 		
-		
+	
 	}
 
 	public void autonomousPeriodic()
@@ -335,6 +399,9 @@ public class Robot extends TimedRobot {
 					
 					if (autonMode == 2 && autonGameData.charAt(0) == 'L') { //if Robot and switch are on Left
 						
+						if(autonTimer.get() >= 0){
+							encMove(.2, 10000, .2, 10000);
+						}
 						
 						
 					}
