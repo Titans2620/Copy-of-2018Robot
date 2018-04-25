@@ -16,6 +16,8 @@ import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive.*;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
+
+
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
@@ -24,7 +26,7 @@ import edu.wpi.first.wpilibj.PWMSpeedController;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.CameraServer;
 
-public class Robot extends TimedRobot {
+public class Robot extends TimedRobot{
 	
 	WPI_TalonSRX driveRight = new WPI_TalonSRX(5);
 	WPI_TalonSRX driveLeft = new WPI_TalonSRX(1);
@@ -72,6 +74,7 @@ public class Robot extends TimedRobot {
 	private boolean Locked;
 	private SendableChooser<Integer> enableSwitchlocks;
 	
+	int difference;
 	
 	// Auton Vars
 	private SendableChooser<Integer> autonChooser;
@@ -86,6 +89,10 @@ public class Robot extends TimedRobot {
 	private boolean autonLifted = false;
 	private Timer autonTimer;
 
+	boolean stop = false; 
+	boolean rightStop = false;
+	boolean leftStop = false;
+	
 	private Timer carriageBumpTimer;
 	private boolean carriageBumpRun = false;
 	
@@ -122,13 +129,13 @@ public class Robot extends TimedRobot {
 		driveLeftEncoder.setMaxPeriod(.1);
 		driveLeftEncoder.setMinRate(10);
 		driveLeftEncoder.setDistancePerPulse(6.0 / 360.0); // Distance = circumference * pulses / pulses_per_revolution, circumference = 6, pulsers_per_revolution = 360?
-		driveLeftEncoder.setReverseDirection(true);
+		driveLeftEncoder.setReverseDirection(false);
 		driveLeftEncoder.setSamplesToAverage(7);
 
 		driveRightEncoder.setMaxPeriod(.1);
 		driveRightEncoder.setMinRate(10);
 		driveRightEncoder.setDistancePerPulse(6.0 / 360.0); // Distance = circumference * pulses / pulses_per_revolution, circumference = 6, pulsers_per_revolution = 360?
-		driveRightEncoder.setReverseDirection(false);
+		driveRightEncoder.setReverseDirection(true);
 		driveRightEncoder.setSamplesToAverage(7);
 
 		// Setup Auton Chooseable
@@ -231,53 +238,70 @@ public class Robot extends TimedRobot {
 		carriageMotor.set(speed);
 	}
 	
-	public void encMove(double rSpeed, int rDistance, double lSpeed, int lDistance, boolean forward) {
+	public void encMove(double speed, int distance){
+		driveLeftEncoder.reset();
+		driveRightEncoder.reset();
 		
-		double newRSpeed = rSpeed;
-		double newLSpeed = lSpeed;
-		int difference;
+		while(stop = false){
+			double newSpeed = speed;
+				difference = driveRightEncoder.getRaw() - driveLeftEncoder.getRaw();
+				if(difference > 10){
+					newSpeed = (newSpeed - .10);
+					driveRight.set(newSpeed);
+				}
+				else{
+					driveRight.set(speed);
+					newSpeed = speed;
+				}
+				if(difference < -10){
+					newSpeed = (newSpeed - .10);
+					driveLeft.set(newSpeed);
+				}
+				else{
+					driveLeft.set(speed);
+					newSpeed = speed;
+				}
+			if(driveRightEncoder.getRaw() > distance){
+				rightStop = true;
+				driveRight.set(0);
+				}
+			if(driveLeftEncoder.getRaw() > distance){
+				leftStop = true;
+				driveLeft.set(0);
+			}
+			if(leftStop == true && rightStop == true){
+				stop = true;
+			}
 		
-		while(forward == true){
-			difference = driveRightEncoder.getRaw() - driveLeftEncoder.getRaw();
-			if(difference > 10){
-				newRSpeed = (newRSpeed - .1);
-				driveRight.set(newRSpeed);
-			}
-			else{
-				driveRight.set(rSpeed);
-				newRSpeed = rSpeed;
-			}
-			if(difference < -10){
-				newLSpeed = (newLSpeed - .1);
-				driveLeft.set(newLSpeed);
-			}
-			else{
-				driveLeft.set(lSpeed);
-				newLSpeed = lSpeed;
-			}
-	
 		
-			if(driveRightEncoder.getRaw() > rDistance){
-				driveRight.set(rSpeed);
-		
-			}
-		
-		else{driveRight.set(0);
-			break;
-		}
-		if(driveLeftEncoder.getRaw() > lDistance){
-			driveLeft.set(lSpeed);
-		}
-		else{driveLeft.set(0);
-			break;
 		}
 	}
-		while(forward == false) {
-			if(driveRightEncoder.getRaw() > rDistance + 10) {
-				driveRight.set(.1);
-				
+	public void encMove(double lSpeed, int lDistance, double rSpeed, int rDistance) {
+		driveLeftEncoder.reset();
+		driveRightEncoder.reset();
+		boolean stop = false;
+		boolean leftStop = false;
+		boolean rightStop = false;
+		while(stop == false){
+			if(driveRightEncoder.getRaw() < rDistance){
+				driveRight.set(rSpeed);
+			}
+			else{
+				driveRight.set(0);
+				rightStop = true;
+			}
+			if(driveLeftEncoder.getRaw() < lDistance){
+				driveLeft.set(lSpeed);
+			}
+			else{
+				driveLeft.set(0);
+				leftStop = true;
+			}
+			if(rightStop == true && leftStop == true){
+				stop = true;
 			}
 		}
+		
 	}
 
 	public void autonomousInit()
@@ -298,6 +322,8 @@ public class Robot extends TimedRobot {
 		frontDistance.setAutomaticMode(true);
 		driveLeftEncoder.reset();
 		driveRightEncoder.reset();
+		driveLeft.setInverted(true);
+		driveRight.setInverted(false);
 		
 		
 	}
@@ -330,34 +356,42 @@ public class Robot extends TimedRobot {
 				case 2: // Switch & Robot is on Left
 					
 				case 3: // Switch & Robot is on Right
-					/*double speed = 0.4;
-					double time = 2.5;*/
+					
 					
 					if (autonMode == 2 && autonGameData.charAt(0) == 'L') { //if Robot and switch are on Left
 						
-						
+							if(stop == false){
+								encMove(.5, 9500);
+								Timer.delay(1);
+								encMove(.25, 7000, .25, 0);
+								Timer.delay(1);
+								encMove(.25, 3000);
+								Timer.delay(1);
+								stop = true;
+							}
 						
 					}
 					if (autonMode == 2 && autonGameData.charAt(0) == 'R'){//if robot left and switch is on Right
-							
+						if(stop == false){	
+							encMove(.5, 11000);
+							Timer.delay(1);
+							encMove(.25, 3100, .25, 0);
+							Timer.delay(1);
+							encMove(.5, 500);
+							Timer.delay(1);
+							encMove(.25, 3100, .25, 0);
+							Timer.delay(1);
+							stop = true;
+						}
 					}
 					
 					if (autonMode == 3 && autonGameData.charAt(0) == 'R') { // if Robot and switch are on Right
-						/*speed = 0.65;
-						time = 1.7;*/
-						driveRight.set(1);Timer.delay(0.1);driveLeft.set(0);
+						encMove(.5, 9500);
 					}
 					if(autonMode == 3 && autonGameData.charAt(0) == 'L'){//if robot right and switch are Left
 						driveRight.set(-1);Timer.delay(0.1);driveLeft.set(0);
 					}
 					
-					/*if(autonTimer.get() >= time) {
-						// 2 - Stop Carriage Moving
-						drive(0.0, 0.0);
-					} else {
-						// 1 - Start
-						drive(speed * 0.93, speed);
-					}*/
 					break;
 				case 4: // Scale & Robot is on Left
 					auton_sideLastSeen = "R";
