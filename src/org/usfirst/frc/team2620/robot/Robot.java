@@ -28,22 +28,19 @@ import edu.wpi.first.wpilibj.CameraServer;
 
 public class Robot extends TimedRobot{
 	
-	WPI_TalonSRX driveRight = new WPI_TalonSRX(5);
-	WPI_TalonSRX driveLeft = new WPI_TalonSRX(1);
 	
-	/*WPI_TalonSRX driveRight = new WPI_TalonSRX(1);
-	WPI_TalonSRX driveLeft = new WPI_TalonSRX(5);*/
+	WPI_TalonSRX driveRight = new WPI_TalonSRX(1);
+	WPI_TalonSRX driveLeft = new WPI_TalonSRX(5);
 
 	WPI_TalonSRX stage2Right = new WPI_TalonSRX(2);
 	WPI_TalonSRX stage2Left = new WPI_TalonSRX(6);
 	WPI_TalonSRX carriageMotor = new WPI_TalonSRX(7);
-	//WPI_TalonSRX pickupRight = new WPI_TalonSRX(3);
-	//WPI_TalonSRX pickupLeft = new WPI_TalonSRX(4);
+	WPI_TalonSRX pickupRight = new WPI_TalonSRX(3);
+	WPI_TalonSRX pickupLeft = new WPI_TalonSRX(4);
 	WPI_TalonSRX tiltMotor = new WPI_TalonSRX(8);
 	
-	//fix b4 comp
-	PWMSpeedController pickupLeft = new Spark(3);
-	PWMSpeedController pickupRight = new Spark(4);
+	
+	
 	
 	Servo RclimbLock = new Servo(0);
 	Servo LclimbLock = new Servo(1);
@@ -54,13 +51,13 @@ public class Robot extends TimedRobot{
 	
 	double encoderD = 0;
 	
-	Ultrasonic frontDistance = new Ultrasonic(8, 9);
-	//ADXRS450_Gyro gyro;
+	
+	ADXRS450_Gyro gyro;
 	
 	DigitalInput stage2TopStop = new DigitalInput(2);
 	DigitalInput stage2BottomStop = new DigitalInput(4);
 	DigitalInput carriageTopStop = new DigitalInput(1);
-	DigitalInput carriageBottomStop = new DigitalInput(0);
+	DigitalInput carriageBottomStop = new DigitalInput(9);
 	
 	//DifferentialDrive drive;
 	
@@ -115,8 +112,8 @@ public class Robot extends TimedRobot{
 		arms.set(120);
 		autonTimer = new Timer();
 		
-		//gyro = new ADXRS450_Gyro();
-		//gyro.calibrate();
+		gyro = new ADXRS450_Gyro();
+		gyro.calibrate();
 		
 		driveRight.setInverted(true);
 		pickupLeft.setInverted(true);
@@ -238,9 +235,26 @@ public class Robot extends TimedRobot{
 		carriageMotor.set(speed);
 	}
 	
+	public void tiltDown(double time){
+		stop = false;
+		if(stop == false){
+			tiltMotor.set(.5);
+			Timer.delay(time);
+			tiltMotor.set(.5);
+			stop = false;
+		}
+	}
+	public void fire(double speed, double time){
+		pickupRight.set(speed);
+		pickupRight.set(speed);
+		Timer.delay(time);
+		pickupRight.set(0);
+		pickupLeft.set(0);
+	}
 	public void encMove(double speed, int distance){
 		driveLeftEncoder.reset();
 		driveRightEncoder.reset();
+		stop = false;
 		
 		while(stop = false){
 			double newSpeed = speed;
@@ -277,6 +291,7 @@ public class Robot extends TimedRobot{
 		}
 	}
 	public void encMove(double lSpeed, int lDistance, double rSpeed, int rDistance) {
+		stop = false;
 		driveLeftEncoder.reset();
 		driveRightEncoder.reset();
 		boolean stop = false;
@@ -319,11 +334,10 @@ public class Robot extends TimedRobot{
 
 		autonGameData = DriverStation.getInstance().getGameSpecificMessage();
 		autonMode = (int) autonChooser.getSelected();
-		frontDistance.setAutomaticMode(true);
+	
 		driveLeftEncoder.reset();
 		driveRightEncoder.reset();
-		driveLeft.setInverted(true);
-		driveRight.setInverted(false);
+		
 		
 		
 	}
@@ -367,11 +381,13 @@ public class Robot extends TimedRobot{
 								Timer.delay(1);
 								encMove(.25, 3000);
 								Timer.delay(1);
+								tiltDown(1);
+								fire(1, 1);
 								stop = true;
 							}
 						
 					}
-					if (autonMode == 2 && autonGameData.charAt(0) == 'R'){//if robot left and switch is on Right
+					if (autonMode == 2 && autonGameData.charAt(0) == 'R'){//if robot Left and switch is on Right
 						if(stop == false){	
 							encMove(.5, 11000);
 							Timer.delay(1);
@@ -381,20 +397,79 @@ public class Robot extends TimedRobot{
 							Timer.delay(1);
 							encMove(.25, 3100, .25, 0);
 							Timer.delay(1);
+							tiltDown(1);
+							Timer.delay(1);
+							fire(1,1);
 							stop = true;
 						}
 					}
 					
 					if (autonMode == 3 && autonGameData.charAt(0) == 'R') { // if Robot and switch are on Right
-						encMove(.5, 9500);
+						if(stop == false){	
+							encMove(.5, 9500);
+							Timer.delay(1);
+							encMove(.5, 0, .5, 7000);
+							Timer.delay(1);
+							encMove(.5, 3000);
+							tiltDown(1);
+							Timer.delay(1);
+							fire(1,1);
+							stop = true;
+						}
 					}
 					if(autonMode == 3 && autonGameData.charAt(0) == 'L'){//if robot right and switch are Left
-						driveRight.set(-1);Timer.delay(0.1);driveLeft.set(0);
+						if(stop == false){
+							encMove(.5, 11000);
+							Timer.delay(1);
+							encMove(.25, 0, .25, 3100);
+							Timer.delay(1);
+							encMove(.5, 10000);
+							Timer.delay(1);
+							encMove(.25, 0, .25, 3100);
+							Timer.delay(1);
+							tiltDown(1);
+							Timer.delay(1);
+							fire(1,1);
+							stop  = true;
+						}
+						
 					}
 					
 					break;
 				case 4: // Scale & Robot is on Left
-					auton_sideLastSeen = "R";
+					if(autonGameData.charAt(1) == 'L' ){// if robot left and scale left
+						
+						if(stop == false){
+							encMove(.5, 13000);
+							Timer.delay(1);
+							encMove(.25, 3100, .25, 0);
+							Timer.delay(1);
+							tiltDown(1);
+							Timer.delay(1);
+							fire(1,1);
+							stop = true;
+						}
+					}
+					if(autonGameData.charAt(1) == 'R'){//if robot left and scale right
+						if(stop == false){
+							encMove(.5,11000);
+							Timer.delay(1);
+							encMove(.25, 3100, .25, 0);
+							Timer.delay(1);
+							encMove(.5, 10000);
+							Timer.delay(1);
+							encMove(.25, 0, .25, 3100);
+							Timer.delay(1);
+							encMove(.5, 1000);
+							Timer.delay(1);
+							encMove(.5, 0, .5 , 3100);
+							Timer.delay(1);
+							tiltDown(1);
+							Timer.delay(1);
+							fire(1,1);
+							stop = true;
+						}
+					}
 					break;
 				case 5: // Scale & Robot is on Right
 					auton_sideLastSeen = "L";
@@ -409,7 +484,7 @@ public class Robot extends TimedRobot{
 
 	public void teleopInit() {
 		Locked = false;
-		//gyro.reset();
+		gyro.reset();
 		driveLeftEncoder.reset();
 		driveRightEncoder.reset();
 	}
@@ -587,7 +662,7 @@ public class Robot extends TimedRobot{
 			}
 		}
 		
-		
+		System.out.println(stage2Left.get());
 		////////////////////////////////////////////
 /*		if(Jacob == true) {
 			if(rPOV == 0 || rPOV == 45 || rPOV == 315) {
