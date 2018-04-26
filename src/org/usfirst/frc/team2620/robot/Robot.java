@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
@@ -33,7 +34,7 @@ public class Robot extends TimedRobot {
 	WPI_TalonSRX carriageMotor = new WPI_TalonSRX(7);
 	WPI_TalonSRX pickupRight = new WPI_TalonSRX(3);
 	WPI_TalonSRX pickupLeft = new WPI_TalonSRX(4);
-	
+	WPI_TalonSRX tiltMotor = new WPI_TalonSRX(8);
 	Servo RclimbLock = new Servo(0);
 	Servo LclimbLock = new Servo(1);
 	Servo arms = new Servo(2);
@@ -77,6 +78,11 @@ public class Robot extends TimedRobot {
 	private boolean autonLifted = false;
 	private Timer autonTimer;
 
+	boolean autonLLS = false;
+	boolean autonLRS = false;
+	boolean autonRRS = false;
+	boolean autonRLS = false;
+	
 	private Timer carriageBumpTimer;
 	private boolean carriageBumpRun = false;
 	
@@ -244,13 +250,13 @@ public class Robot extends TimedRobot {
 		updateSmartDashboard();
 		double driveForwardTime = 1.5;
 		
-		autonLifted = true;
+		/*autonLifted = true;
 		if(!autonLifted) {
 			carriage(0.4);
 			Timer.delay(0.3);
 			carriage(0.0);
 			autonLifted = true;
-		} else {
+		} else {*/
 			switch(autonMode) {
 				case 1:
 					// System.out.println(autonTimer.get());
@@ -259,31 +265,67 @@ public class Robot extends TimedRobot {
 						drive(0.0, 0.0);
 					} else {
 						// 1 - Start
-						drive(0.7, 0.7);
+						drive(-0.7,-0.7);
 					}
 					break;
 				case 2: // Switch & Robot is on Left
 				case 3: // Switch & Robot is on Right
-					double speed = 0.4;
-					double time = 2.5;
+				
+					driveRight.setSafetyEnabled(false);
+					driveRight.setSafetyEnabled(false);
+					pickupRight.setSafetyEnabled(false);
+					pickupLeft.setSafetyEnabled(false);
+					tiltMotor.setSafetyEnabled(false);
 					
-					if (autonMode == 2 && autonGameData.charAt(0) == 'L') {
-						speed = 0.65;
-						time = 1.7;
+					if (autonMode == 2 && autonGameData.charAt(0) == 'L') {// robot left switch left
+						
+						
 					}
-					
+					if (autonMode == 2 && autonGameData.charAt(0) == 'R') {// robot left switch right
+						if(autonLRS == false){
+							drive(-.5, -.5);
+							Timer.delay(2.5);
+							drive(0,0);
+							Timer.delay(.5);
+							autonLRS = true;
+						}
+					}
+
 					if (autonMode == 3 && autonGameData.charAt(0) == 'R') {
-						speed = 0.65;
-						time = 1.7;
+						if(autonRRS == false){
+							drive(-.5, -.5);
+							Timer.delay(2.5);
+							drive(0,0);
+							Timer.delay(.5);
+							tiltMotor.set(.5);
+							Timer.delay(1);
+							tiltMotor.set(0);
+							Timer.delay(1);
+							pickup(-1);
+							Timer.delay(1);
+							pickup(0);
+							autonRRS = true;
+						}
+					}
+
+					if (autonMode == 3 && autonGameData.charAt(0) == 'L') {
+						if(autonRLS == false){
+							drive(-.5, -.5);
+							Timer.delay(2.5);
+							drive(0,0);
+							Timer.delay(.5);
+							
+							autonRLS = true;
+						}
 					}
 					
-					if(autonTimer.get() >= time) {
+					/*if(autonTimer.get() >= time) {
 						// 2 - Stop Carriage Moving
 						drive(0.0, 0.0);
 					} else {
 						// 1 - Start
 						drive(speed * 0.93, speed);
-					}
+					}*/
 					break;
 				case 4: // Scale & Robot is on Left
 					auton_sideLastSeen = "R";
@@ -297,7 +339,7 @@ public class Robot extends TimedRobot {
 					break;
 			}
 		}
-	}
+	
 
 	public void teleopInit() {
 		Locked = false;
@@ -406,7 +448,7 @@ public class Robot extends TimedRobot {
 		// Pickup Logic
 		if(Jacob == true) {
 			if(rTrigger) {
-				pickup(pickupSpeed);
+				pickup(.75);
 				
 			}
 			else if(lTrigger) {
@@ -420,7 +462,8 @@ public class Robot extends TimedRobot {
 		}
 		if(Jacob == false) {
 			if(rTrigger) {
-				pickup(pickupSpeed);
+				pickupRight.set(.75);
+				pickupLeft.set(.85);
 			
 			}
 			else if(rFaceB) {
@@ -505,9 +548,21 @@ public class Robot extends TimedRobot {
 			Timer.delay(6);
 			arms.set(120);
 		}
+	
+		if(rFaceR){
+			tiltMotor.set(.75);
+		}
+		else{
+			if(rFaceL){
+				tiltMotor.set(-.75);
+			}
+			else{
+				tiltMotor.set(0);
+			}
+		}
 	}
 
-		
+	
 	
 
 	public void testPeriodic() {
