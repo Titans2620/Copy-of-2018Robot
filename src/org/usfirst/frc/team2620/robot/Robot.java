@@ -24,11 +24,9 @@ import edu.wpi.first.wpilibj.CameraServer;
 
 public class Robot extends TimedRobot {
 	
-	WPI_TalonSRX driveRight = new WPI_TalonSRX(5);
-	WPI_TalonSRX driveLeft = new WPI_TalonSRX(1);
 	
-	/*WPI_TalonSRX driveRight = new WPI_TalonSRX(1);
-	WPI_TalonSRX driveLeft = new WPI_TalonSRX(5);*/
+	WPI_TalonSRX driveRight = new WPI_TalonSRX(1);
+	WPI_TalonSRX driveLeft = new WPI_TalonSRX(5);
 
 	WPI_TalonSRX stage2Right = new WPI_TalonSRX(2);
 	WPI_TalonSRX stage2Left = new WPI_TalonSRX(6);
@@ -303,9 +301,11 @@ public class Robot extends TimedRobot {
 
 	public void teleopInit() {
 		Locked = false;
-		//gyro.reset();
+		gyro.reset();
 	}
-	public void teleopPeriodic(){
+
+	public void  teleopPeriodic() 
+	{		
 		updateSmartDashboard();
 		
 		if(Locked == false){
@@ -413,10 +413,8 @@ public class Robot extends TimedRobot {
 				pickup(pickupSpeed * -1);
 			}
 			else {
-				
-
 				// set to 0.1 for operation
-				pickup(0.2);
+				pickup(0.1);
 			}
 
 		}
@@ -430,7 +428,7 @@ public class Robot extends TimedRobot {
 			}
 			else {
 				// set to 0.1 for operation
-				pickup(0.2);
+				pickup(0.1);
 			}
 		}
 
@@ -512,19 +510,14 @@ public class Robot extends TimedRobot {
 		
 	
 
-	public void testPeriodic(){
-		
-		 
-		/*boolean lTrigger = left.getRawButton(1);
+	public void testPeriodic() {
+		boolean lTrigger = left.getRawButton(1);
 		
 		if(lTrigger) {
 			carriage(0.4);
 			Timer.delay(0.3);
 			carriage(0.0);
-		}*/
-		
-		
-		
+		}
 		
 		/*boolean lTrigger = left.getRawButton(1);
 		boolean rTrigger = right.getRawButton(1);
