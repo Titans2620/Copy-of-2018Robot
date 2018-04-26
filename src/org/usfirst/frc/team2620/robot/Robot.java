@@ -271,51 +271,72 @@ public class Robot extends TimedRobot {
 				case 2: // Switch & Robot is on Left
 				case 3: // Switch & Robot is on Right
 				
-					driveRight.setSafetyEnabled(false);
+					/*driveRight.setSafetyEnabled(false);
 					driveRight.setSafetyEnabled(false);
 					pickupRight.setSafetyEnabled(false);
 					pickupLeft.setSafetyEnabled(false);
-					tiltMotor.setSafetyEnabled(false);
+					tiltMotor.setSafetyEnabled(false);*/
 					
 					if (autonMode == 2 && autonGameData.charAt(0) == 'L') {// robot left switch left
+						while(autonTimer.get() < 2){
+							drive(-.5,-.5);
+							carriage(.7);
+							tiltMotor.set(.7);
+						}
 						
+						while(autonTimer.get() < 3 ){
+							drive(0,0);
+							carriage(0);
+							tiltMotor.set(0);
+							
+							pickup(-1);
+						}
+						while(autonTimer.get() < 4){
+							pickup(0);
+						}
 						
 					}
 					if (autonMode == 2 && autonGameData.charAt(0) == 'R') {// robot left switch right
-						if(autonLRS == false){
-							drive(-.5, -.5);
-							Timer.delay(2.5);
+						while(autonTimer.get() < 2){
+							drive(-.5,-.5);
+							
+						}
+						
+						while(autonTimer.get() < 3 ){
 							drive(0,0);
-							Timer.delay(.5);
-							autonLRS = true;
+							
 						}
 					}
 
 					if (autonMode == 3 && autonGameData.charAt(0) == 'R') {
-						if(autonRRS == false){
-							drive(-.5, -.5);
-							Timer.delay(2.5);
-							drive(0,0);
-							Timer.delay(.5);
-							tiltMotor.set(.5);
-							Timer.delay(1);
-							tiltMotor.set(0);
-							Timer.delay(1);
-							pickup(-1);
-							Timer.delay(1);
-							pickup(0);
-							autonRRS = true;
+						while(autonTimer.get() < 1.5){
+							drive(-.5,-.5);
+							carriage(.75);
+							tiltMotor.set(.75);
 						}
+						
+						while(autonTimer.get() < 2.5 ){
+							drive(0,0);
+							carriage(0);
+							tiltMotor.set(0);
+							
+							pickup(-1);
+						}
+						while(autonTimer.get() < 3.5){
+							pickup(0);
+						}
+						
 					}
 
 					if (autonMode == 3 && autonGameData.charAt(0) == 'L') {
-						if(autonRLS == false){
-							drive(-.5, -.5);
-							Timer.delay(2.5);
-							drive(0,0);
-							Timer.delay(.5);
+						while(autonTimer.get() < 1.5){
+							drive(-.5,-.5);
 							
-							autonRLS = true;
+						}
+						
+						while(autonTimer.get() < 2.5 ){
+							drive(0,0);
+							
 						}
 					}
 					
@@ -328,7 +349,8 @@ public class Robot extends TimedRobot {
 					}*/
 					break;
 				case 4: // Scale & Robot is on Left
-					auton_sideLastSeen = "R";
+					
+					//auton_sideLastSeen = "R";
 					break;
 				case 5: // Scale & Robot is on Right
 					auton_sideLastSeen = "L";
