@@ -129,6 +129,7 @@ public class Robot extends TimedRobot {
 		autonChooser.addObject("TARGET SWITCH - ROBOT is RIGHT", 3);
 		autonChooser.addObject("TARGET SCALE -- ROBOT is LEFT", 4);
 		autonChooser.addObject("TARGET SCALE -- ROBOT is RIGHT", 5);
+		autonChooser.addObject("TARGET SWITCH -- ROBOT IS CENTER", 6);
 		SmartDashboard.putData("Auton Mode", autonChooser);
 		
 
@@ -190,6 +191,7 @@ public class Robot extends TimedRobot {
 	}
 	
 	public void carriage(double speed) 
+
 	{	
 		if(enableSwitchlocks.getSelected() == 1) {
 			if(carriageTopStop.get() && speed > 0) {
@@ -219,7 +221,120 @@ public class Robot extends TimedRobot {
 		
 		carriageMotor.set(speed);
 	}
+	
+	public void encoderDrive(int leftEncoder, double leftSpeed, int rightEncoder, double rightSpeed){
+		boolean rightStop = false;
+		boolean leftStop = false;
+		boolean stop = false;
+		int leftInvert = 1;
+		int rightInvert = 1;
+		driveLeftEncoder.reset();
+		driveRightEncoder.reset();
+		while(stop == false) {
+			if(leftEncoder < 0) {
+				leftInvert = -1;
+			}
+			if(rightInvert < 0) {
+				rightInvert = -1;
+			}
+			if(leftEncoder == rightEncoder) {	//runs drive correction
+				int variance;
+				double newLeftSpeed = leftSpeed;
+				double newRightSpeed = rightSpeed;
+				variance = leftEncoder - rightEncoder;
 
+				
+				if(variance * leftInvert > 10) {	//if leaning to right
+					if(driveLeftEncoder.get() * leftInvert < leftEncoder * leftInvert) {	//if encoder value has not been reached
+						newLeftSpeed -= .1 * leftInvert;
+						driveLeft.set(newLeftSpeed);
+					}
+					else {	//encoderValue has been reached
+						driveLeft.set(0);
+						leftStop = true;
+					
+					}
+				}
+				else if(variance * leftInvert < -10) { //if leaning to left
+					if(driveLeftEncoder.get() * leftInvert < leftEncoder * leftInvert) {
+						newLeftSpeed += .1 * leftInvert;
+						driveLeft.set(newLeftSpeed);
+					}
+					else {	
+						driveLeft.set(0);
+						leftStop = true;
+					}
+				}
+				else {	//if no variance
+					if(driveLeftEncoder.get() * leftInvert < leftEncoder * leftInvert) {
+						driveLeft.set(leftSpeed);
+					}
+					else {
+						driveLeft.set(0);
+						leftStop = true;
+					}
+					newLeftSpeed = leftSpeed;
+				}
+					
+			
+			if(rightEncoder >= 0) {	//if using positive encoder value
+				if(variance > 10) {	//if leaning to right
+					if(driveRightEncoder.get() * rightInvert < rightEncoder * rightInvert) {	//if encoder value has not been reached
+						newRightSpeed -= .1 * rightInvert;
+						driveRight.set(newRightSpeed);
+					}
+					else {	//encoderValue has been reached
+						driveRight.set(0);
+						rightStop = true;
+					
+					}
+				}
+				else if(variance < -10) { //if leaning to right
+					if(driveRightEncoder.get() * rightInvert < rightEncoder * rightInvert) {
+						newRightSpeed += .1 * rightInvert;
+						driveRight.set(newRightSpeed);
+					}
+					else {	
+						driveRight.set(0);
+						rightStop = true;
+					}
+				}
+				else {	//if no variance
+					if(driveRightEncoder.get() * rightInvert < leftEncoder * rightInvert) {
+						driveRight.set(leftSpeed);
+					}
+					else {
+						driveRight.set(0);
+						rightStop = true;
+					}
+					newRightSpeed = rightSpeed;
+					}
+				}
+			}
+			else {
+				if(driveLeftEncoder.get() * leftInvert < leftEncoder * leftInvert) {
+					driveLeft.set(leftSpeed);
+				}
+				else {
+					driveLeft.set(0);
+					leftStop = true;
+				}
+				if(driveRightEncoder.get() * rightInvert < rightEncoder * leftInvert) {
+					driveRight.set(rightSpeed);
+				}
+				else {
+					driveRight.set(0);
+					rightStop = true;
+				}
+				
+			}
+			if(leftStop && rightStop) {
+				stop = true;
+			}
+		}
+	}
+	
+		
 	public void autonomousInit()
 	{
 		autonLifted = false;
@@ -264,33 +379,162 @@ public class Robot extends TimedRobot {
 					break;
 				case 2: // Switch & Robot is on Left
 				case 3: // Switch & Robot is on Right
-					double speed = 0.4;
-					double time = 2.5;
+
 					
 					if (autonMode == 2 && autonGameData.charAt(0) == 'L') {
-						speed = 0.65;
-						time = 1.7;
+						
+						encoderDrive(2000, .5, 2000, .5); //drive forward
+						autonTimer.reset();
+						autonTimer.start();
+						while(autonTimer.get() < 1) {	//raise carriage for 1 second
+							carriage(.5);
+						}
+						carriage(0);
+						encoderDrive(500, .5, -500, .5);	//turn to right
+						encoderDrive(200, .25, 200, .5);	//drive forward
+						
+						autonTimer.reset();
+						autonTimer.start();
+						while(autonTimer.get() < 1) {	//run pickup for 1 second
+							pickup(.5);
+						}
+						pickup(0);
+						autonTimer.reset();
+						encoderDrive(-200, -.5, -200, -.5);	//drive backwards
+						encoderDrive(-300, -.25, 300, .25);	//turn to right
+						encoderDrive(500, .5, 500, .5);	//drive forward
+						
 					}
 					
 					if (autonMode == 3 && autonGameData.charAt(0) == 'R') {
-						speed = 0.65;
-						time = 1.7;
+						
+						encoderDrive(2000, .5, 2000, .5);	//drive forward
+						while(autonTimer.get() < 1) {	//raise carriage for 1 second
+							carriage(1);
+						}
+						carriage(0);
+						
+						encoderDrive(-250, .25, 250, .25); // turn to left
+						encoderDrive(200, .25, 200, .5);	// drive forward
+						
+						autonTimer.reset();
+						autonTimer.start();
+						while(autonTimer.get() < 1) {	//run pickup for 1 second
+							pickup(.5);
+						}
+						pickup(0);
+						autonTimer.reset();
+						encoderDrive(-200, -.5, -200, -.5);	//run backward
+						encoderDrive(300, .25, -300, -.25);	//turn right
+						encoderDrive(500, .5, 500, .5);	//drive forward
+						
 					}
 					
-					if(autonTimer.get() >= time) {
-						// 2 - Stop Carriage Moving
-						drive(0.0, 0.0);
-					} else {
-						// 1 - Start
-						drive(speed * 0.93, speed);
-					}
 					break;
 				case 4: // Scale & Robot is on Left
-					auton_sideLastSeen = "R";
+					if(autonGameData.charAt(1) == 'L') {
+						encoderDrive(3000, .5, 3000, .5);	//move forward
+						autonTimer.reset();
+						autonTimer.start();
+						while(autonTimer.get() < 3) {
+							lift(1);
+							carriage(1);
+						}
+						
+						lift(0);
+						carriage(0);
+						encoderDrive(100, .25, 100, .25);
+						autonTimer.reset();
+						autonTimer.start();
+						while(autonTimer.get() < 1) {
+							pickup(.5);
+						}
+						pickup(0);
+						while(autonTimer.get() < 4) {
+							lift(-1);
+							carriage(-1);
+						}
+						lift(0);
+						carriage(0);
+						encoderDrive(600, .5, -600, -.5);
+						while(autonTimer.get() < 2) {
+							drive(.5, .5);
+							pickup(-1);
+						}
+						encoderDrive(-200, -.5, -200, -.5);
+					}
+					else {
+						encoderDrive(2000, .5, 2000, .5);
+					}
 					break;
 				case 5: // Scale & Robot is on Right
-					auton_sideLastSeen = "L";
-					// auton_placeInScale();
+					if(autonGameData.charAt(1) == 'R') {
+						encoderDrive(3000, .5, 3000, .5);
+						autonTimer.reset();
+						autonTimer.start();
+						while(autonTimer.get() < 3) {
+							lift(1);
+							carriage(1);
+						}
+						
+						lift(0);
+						carriage(0);
+						encoderDrive(100, .25, 100, .25);
+						autonTimer.reset();
+						autonTimer.start();
+						while(autonTimer.get() < 1) {
+							pickup(.5);
+						}
+						pickup(0);
+						while(autonTimer.get() < 4) {
+							lift(-1);
+							carriage(-1);
+						}
+						lift(0);
+						carriage(0);
+						encoderDrive(-600, -.5, 600, .5);
+						while(autonTimer.get() < 2) {
+							drive(.5, .5);
+							pickup(-1);
+						}
+						encoderDrive(-200, -.5, -200, -.5);
+					}
+					else {
+						encoderDrive(2000, .5, 2000, .5);
+					}
+					break;
+					
+				case 6: // center and switch
+					if(autonGameData.charAt(0) == 'R') {
+						encoderDrive(200, .5, 200, .5);
+						autonTimer.reset();
+						autonTimer.start();
+						while(autonTimer.get() < 2) {
+							carriage(.5);
+						}
+						carriage(0);
+						encoderDrive(250, .25, -250, -.25);
+						encoderDrive(200, .5, 200, .5);
+						encoderDrive(-250, -.25, 250, .25);
+						encoderDrive(500, .25, 500, .25);
+						encoderDrive(0, 0, 0, 0);
+						autonTimer.reset();
+						autonTimer.start();
+						while(autonTimer.get() < 1) {
+							pickup(.5);
+						}
+						pickup(0);
+						encoderDrive(-250, -.5, -250, -.5);
+						autonTimer.reset();
+						autonTimer.start();
+						while(autonTimer.get() < 2) {
+							carriage(-.5);
+						}
+						carriage(0);
+						
+						
+						
+					}
 					break;
 				default:
 					// auton_driveStraightDistance(autonStraightOnlyDistance);
