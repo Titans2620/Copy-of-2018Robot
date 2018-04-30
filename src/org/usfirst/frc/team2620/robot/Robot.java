@@ -201,26 +201,12 @@ public class Robot extends TimedRobot {
 			if(carriageTopStop.get() && speed > 0) {
 				speed = 0.0;
 			}
+			else{carriageMotor.set(speed);}
 			
 			if(carriageBottomStop.get() && speed < 0) {
 				speed = 0.0;
-				
-				if(!carriageBumpRun) {
-					carriageBumpTimer.reset();
-					carriageBumpTimer.start();
-					carriageBumpRun = true;
 				}
-			}
-		}
-		
-		if(carriageBumpRun) {
-			if(carriageBumpTimer.get() < 0.15) {
-				speed = 0.4;
-			} else {
-				speed = 0.0;
-				carriageBumpRun = false;
-				carriageBumpTimer.stop();
-			}
+			else{carriageMotor.set(1);}
 		}
 		
 		carriageMotor.set(speed);
@@ -283,60 +269,109 @@ public class Robot extends TimedRobot {
 							carriage(.7);
 							tiltMotor.set(.7);
 						}
-						
-						while(autonTimer.get() < 3 ){
-							drive(0,0);
+						while(autonTimer.get() < 2.5){
+							drive(-.5, .5);
 							carriage(0);
 							tiltMotor.set(0);
+						}
+						while(autonTimer.get() < 3){
+							drive(-.25, -.25);
+						}
+						
+						while(autonTimer.get() < 4){
+							drive(0,0);
 							
 							pickup(-1);
 						}
-						while(autonTimer.get() < 4){
+						while(autonTimer.get() < 5){
 							pickup(0);
 						}
 						
 					}
 					if (autonMode == 2 && autonGameData.charAt(0) == 'R') {// robot left switch right
-						while(autonTimer.get() < 2){
+						while(autonTimer.get() < 3){
 							drive(-.5,-.5);
 							
+							
+						}
+						/*while(autonTimer.get() < 3.5){
+							drive(-.5, .5);
 						}
 						
-						while(autonTimer.get() < 3 ){
+						while(autonTimer.get() < 6 ){
+							drive(-.5,-.5);
+							carriage(.5);
+							tiltMotor.set(.5);
+						}
+						while(autonTimer.get() < 6.5){
+							drive(-.25, -.25);
+							carriage(0);
+							tiltMotor.set(0);
+						}*/
+						while(autonTimer.get() < 
+								3.5){
 							drive(0,0);
-							
+							//pickup(-1);
+						}
+						while(autonTimer.get() < 8.5){
+							pickup(0);
 						}
 					}
 
-					if (autonMode == 3 && autonGameData.charAt(0) == 'R') {
-						while(autonTimer.get() < 1.5){
+					if (autonMode == 3 && autonGameData.charAt(0) == 'R') { //robot right switch right
+						while(autonTimer.get() < 2){
 							drive(-.5,-.5);
-							carriage(.75);
-							tiltMotor.set(.75);
+							carriage(.7);
+							tiltMotor.set(.7);
 						}
-						
-						while(autonTimer.get() < 2.5 ){
-							drive(0,0);
+						while(autonTimer.get() < 2.5){
+							drive(.5, -.5);
 							carriage(0);
 							tiltMotor.set(0);
+						}
+						while(autonTimer.get() < 3){
+							drive(-.25, -.25);
+						}
+						
+						while(autonTimer.get() < 4){
+							drive(0,0);
 							
 							pickup(-1);
 						}
-						while(autonTimer.get() < 3.5){
+						while(autonTimer.get() < 5){
 							pickup(0);
 						}
 						
+						
 					}
 
-					if (autonMode == 3 && autonGameData.charAt(0) == 'L') {
-						while(autonTimer.get() < 1.5){
+					if (autonMode == 3 && autonGameData.charAt(0) == 'L') { //robot right switch left
+						while(autonTimer.get() < 3){
 							drive(-.5,-.5);
 							
+							
+						}
+						/*while(autonTimer.get() < 3.5){
+							drive(-.5, .5);
 						}
 						
-						while(autonTimer.get() < 2.5 ){
+						while(autonTimer.get() < 6 ){
+							drive(-.5,-.5);
+							carriage(.5);
+							tiltMotor.set(.5);
+						}
+						while(autonTimer.get() < 6.5){
+							drive(-.25, -.25);
+							carriage(0);
+							tiltMotor.set(0);
+						}*/
+						while(autonTimer.get() < 
+								3.5){
 							drive(0,0);
-							
+							//pickup(-1);
+						}
+						while(autonTimer.get() < 8.5){
+							pickup(0);
 						}
 					}
 					
@@ -489,7 +524,7 @@ public class Robot extends TimedRobot {
 			
 			}
 			else if(rFaceB) {
-				pickup(pickupSpeed * -1);
+				pickup(pickupSpeed * -.7);
 			}
 			else {
 				// set to 0.1 for operation
@@ -530,7 +565,10 @@ public class Robot extends TimedRobot {
 			}
 			else{
 				stage2Left.set(0);
-				carriage(0.1);
+				
+				if(!carriageBottomStop.get()){
+					carriage(0.1);
+				}
 			}
 			if(rPOV == 180 || rPOV == 285 || rPOV == 135){
 				if(!stage2BottomStop.get()){
